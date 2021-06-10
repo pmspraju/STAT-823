@@ -8,23 +8,130 @@ output: pdf_document
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 ```
+    
+## 1.(a) Calculate the square root of 625
+  
+We use mathematical function sqrt() to find the square root of a number. sqrt(x) computes the (principal) square root of x, \
 
-## R Markdown
-
-This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
-
-When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
-
-```{r cars}
-summary(cars)
+```{r include = TRUE}
+xSqrt <- sqrt(625)
 ```
-
-## Including Plots
-
-You can also embed plots, for example:
-
-```{r pressure, echo=FALSE}
-plot(pressure)
+\    
+$\Rightarrow \sqrt{625}$ = `r xSqrt` 
+    
+## 1.(b) Create a new object y and assign a value 100 to it
+     
+```{r include = TRUE}
+y <- 100
 ```
+    
+$\Rightarrow y$ = `r y` 
+    
+## 1.(c) Calculate the natural logarithm of y
+    
+```{r include = TRUE}
+lne <- log(y,base=exp(1))
+```
+\    
+$\Rightarrow ln_{e}(`r y`)$ = `r lne` 
+    
+## 1.(d) Calculate the logarithm to base 10 of y
+    
+```{r include = TRUE}
+l10 <- log(y,base=10)
+```
+\    
+$\Rightarrow log_{10}(`r y`)$ = `r l10` 
+    
+## 2.(a) Generate 1000 random numbers from a normal distribution with mean 0 and standard deviation 1
+    
+Normal distribution is a probablity distribution that describes how the values of a variable are distributed. It is a symmetric distribution where most of the observations cluster around the central peak and the probabilities for values move away from the mean reduce equally in both directions. Normal distribution has two parameters, mean and standard deviation. We use 'rnorm' function to generate a normal distribution for given mean and standard deviation. 
+    
+```{r include = TRUE}
+set.seed(4)
+ndist <- rnorm(1000,mean=0,sd=1)
+```
+    
+## 2.(b) Plot the histogram of the above normal distribution
+    
+We use generic function 'hist' to plot the distribution of a given variable. 
+\    
+```{r ndist, echo=TRUE}
+hist(ndist, xlab='random variable',freq=FALSE)
+```
+    
+## 2.(c) Calculate Mean, Standard deviation, Variance, Standard error, minumum, maximum, Median and Range of 1000 random numbers 
+    
+### Mean -    
+It is the average of the given set of numbers, that is, ratio of the sum of the numbers to the total number.We use function 'mean' to compute.
+\    
+$\overline{x} = \dfrac{1}{n}\sum_{i}^{n} x_{i}$
+\    
+```{r echo=TRUE, results='asis'}
+m <- mean(ndist)
+```
+\    
+$\Rightarrow$ mean = `r m` 
+    
+### Variance -    
+It is the mean of the numbers formed by squared differences of original set from the mean.It is a numerical measure of how the data values is dispersed around the mean. We use 'var' function to compute.
+\    
+```{r echo=TRUE}
+v <- var(ndist)
+```
+\    
+$\Rightarrow$ variance = `r v`
+   
+### Standard deviation -    
+The Standard Deviation is a measure of how spread out numbers are. it is the square root of the Variance. We use the function 'sd' to compute
+\    
+```{r echo=TRUE}
+stdv <- sd(ndist)
+``` 
+\    
+$\Rightarrow$ Standard deviation = `r stdv`
+   
+### Standard error -    
+If a statistically independent sample of 'n' observations are taken with a standard deviation of $\sigma$, then the mean value calculated from the sample will have an associated standard error on the mean given by,
+\    
+SE = $\dfrac{\sigma}{\sqrt{n}}$
+\    
+```{r echo=TRUE}
+se <- stdv/sqrt(length(ndist))
+```  
+\    
+$\Rightarrow$ Standard Error = `r se`
+  
+### Minimum -    
 
-Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
+```{r echo=TRUE}
+mi <- min(ndist)
+```  
+\    
+$\Rightarrow$ Minimum = `r mi`
+  
+### Maximum -    
+    
+```{r echo=TRUE}
+mx <- max(ndist)
+```  
+\    
+$\Rightarrow$ Maximum = `r mx`
+    
+### Median -     
+It is the value separating the higher half from the lower half of a data sample. We use the function 'median' to compute 
+\    
+```{r echo=TRUE}
+med <- median(ndist)
+```  
+\    
+$\Rightarrow$ Median = `r med`
+  
+### Range -     
+It is a vector containing the minimum and maximum of all the given arguments. We use the function 'range' to compute
+\    
+```{r echo=TRUE}
+rg <- range(ndist)
+```  
+\    
+$\Rightarrow$ Range = `r rg`
