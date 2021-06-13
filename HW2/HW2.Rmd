@@ -1,0 +1,109 @@
+---
+title: "Homework-2"
+author: "Madhu Peduri"
+date: "6/13/2021"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+    
+## 1.(a) Create a vector of length 10 and fill it with a sequence of integers 
+  
+We use concatenat function to create a vector object, 
+\
+```{r include = TRUE}
+v <- c(1:10)
+length(v)
+```
+\    
+$\Rightarrow$ Vector = `r v` 
+
+## 1.(b) Coerce the vector into a matrix of 5 rows and 2 columns.
+
+We use matrix and as.matrix() functions to coerce a vector in to matrix.
+\
+```{r include = TRUE}
+m <- as.matrix(matrix(v,nrow=5,ncol=2))
+print(m)
+print(class(m))
+```
+
+## 1.(c) Name the columns of the matrix "A" and "B".
+
+We use dimnames() function to add names to the columns of above matrix
+\
+```{r include = TRUE}
+dimnames(m)[2] <- list(c('A','B'))
+print(m)
+```
+
+## 2.Assume that we have recorded the names and ages for four people: James is 27, Art is 42, Kate is 29, and Alex is 33.
+
+### (a) Create a vector of names and a vector of ages from the data, making sure that you keep the ordering of the elements consistent.
+
+\
+```{r include = TRUE}
+nameVec <- c('James', 'Art', 'Kate', 'Alex')
+ageVec <- c(27,42,29,33)
+```
+\
+$\Rightarrow$ Names = `r nameVec` \
+$\Rightarrow$ Ages = `r ageVec` 
+
+### (b) Use the class() function to print the class metadata R has stored for each vector.
+
+\
+```{r include = TRUE}
+cn <- class(nameVec)
+ca <- class(ageVec)
+```
+\
+$\Rightarrow$ Class of Names Vector = `r cn` \
+$\Rightarrow$ Class of Age vector = `r ca` 
+
+### (c) Using data.frame(), combine the two vectors into a dataframe and name the columns something informative. Print out the dataframe.
+
+\
+```{r include = TRUE}
+df <- data.frame(names=nameVec, ages = ageVec)
+print(df)
+```
+
+## 3.A hypothetical data with heights (in cm) and weights (in kg) of 10 family members are given
+
+### (a) Create a vector called ‘ht’ corresponding to the heights of the 10 family members. Assign the names of the family members to the ‘names’ attribute of this vector.
+
+\
+```{r include = TRUE}
+ht <- c(120,172,163,158,153,148,160,170,155,167)
+names(ht) <- c('Niece','Son','GrandPa','Daughter','Yai','GrandMa','Aunty','Uncle','Mom','Dad')
+print(ht)
+```
+### (b) Create a vector called ‘wt’ corresponding to the family member’s weights.
+
+\
+```{r include = TRUE}
+wt <- c(22,52,71,51,51,60,50,67,53,64)
+print(wt)
+```
+### (c) Compute the body mass index (BMI: units should be kg/m2) of each person where BMI = weight/height2.
+
+\
+```{r include = TRUE}
+bmi <- mapply(function(x,y){(y * 100 * 100)/(x * x)}, ht,wt)
+print(bmi) 
+```
+### (d) Identify the persons who have the lowest and highest BMI and calculate the standard deviation of the BMI.
+
+\
+```{r include = TRUE}
+minBmi <- names(bmi)[bmi == min(bmi)]
+maxBmi <- names(bmi)[bmi == max(bmi)]
+sdBmi  <- sd(bmi)
+```
+\
+$\Rightarrow$ Minimum BMI = `r minBmi` \
+$\Rightarrow$ Maximum BMI = `r maxBmi` \
+$\Rightarrow$ Standard Deviation in BMI = `r sdBmi`
