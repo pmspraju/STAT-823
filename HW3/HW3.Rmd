@@ -1,0 +1,141 @@
+---
+title: "Homework-3"
+author: "Madhu Peduri"
+date: "6/17/2021"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+    
+## 1.(a) Clean up the workspace using the rm() function. Use the data() function to display the built-in datasets you can access. Use the R help to learn more about the ‘longley’ dataset: ?longley. 
+
+We use rm() function to remove objects to control the usage of memory.
+We use data() to load the 'longley' dataset and head() to see the sample data.
+\
+```{r include = TRUE}
+rm(list = ls(all=TRUE))
+ldata = longley
+head(ldata)
+class(ldata)
+names(ldata)
+```
+
+## 1.(b) Print only the records in the ‘longley’ dataset that are from the years 1947-1950
+
+```{r include = TRUE}
+longley[longley$Year == 1947:1950,]
+```
+
+## 1.(c) Plot (Unemployed ~ Year)
+
+```{r include = TRUE}
+xmin = min(longley$Year)
+xmax = max(longley$Year)
+plot(longley$Year,longley$Unemployed,xlab = 'Year',ylab='Unemployed',xaxt="n",xlim=c(xmin,xmax))
+axis(1, at = xmin:xmax)
+```
+
+## 1.(d) Change the type of plot to a line
+
+```{r include = TRUE}
+xmin = min(longley$Year)
+xmax = max(longley$Year)
+plot(longley$Year,longley$Unemployed,type='l',xlab = 'Year',ylab='Unemployed',xaxt="n",xlim=c(xmin,xmax))
+axis(1, at = xmin:xmax)
+```
+
+## 2. You track your commute times for two weeks and record the following (in minutes):17 16 20 24 22 15 21 15 17 22.
+
+### a. Enter these numbers into R and find the 5-number summary.
+
+```{r include = TRUE}
+ctime <- c(17, 16, 20, 24, 22, 15, 21, 15, 17, 22)
+summary(ctime)
+```
+
+### b. You find a data entry error, the number 24 should have been 18. Using R, replace the incorrect value without reentering the entire set of data and find the new 5-number summary.
+
+```{r include = TRUE}
+ctime <- c(17, 16, 20, 24, 22, 15, 21, 15, 17, 22)
+ctime[ctime == 24] <- 18
+print(ctime)
+summary(ctime)
+```
+
+### c. Use R to count the number of times your commute was at least 20 minutes.
+
+```{r include = TRUE}
+lt <- length(ctime[ctime <= 20])
+sprintf("Number of times commute was atleast 20 min: %i", lt)
+```
+
+### d. Use R to calculate the percent of your commutes that were less than 17 minutes.
+
+```{r include = TRUE}
+lt <- length(ctime[ctime < 17])
+sprintf("Number of times commute was less than 17 min: %i", lt)
+```
+
+## 3. Using the maltreat.dta dataset, explore the variable ethnic using tab1(ethnic). There are spelling mistakes that need to be corrected. Correct mis-spelt names, and create a numeric, categorical variable ethncity. The “Jola” cleaning code for part (i) has been provided. Finish the remaining part of the code and produce the final (clean) bar chart.
+
+```{r include = TRUE}
+library("readstata13")
+library("epiDisplay")
+
+#Read the maltread data
+maltreat <- read.dta13("data/maltreat.dta")
+
+#Display the frequency
+tab1(maltreat$ethnic, col = "grey")
+
+#create the categorical feature enthnicity from enthnic
+maltreat$ethnicity <- as.factor(maltreat$ethnic)
+levels(maltreat$ethnicity)
+```
+
+### (i). Replace ethnic = “Jola” if ethnic value starts with a “J”.
+
+```{r include = TRUE}
+#Correct Jola
+levels(maltreat$ethnicity)[startsWith(levels(maltreat$ethnicity),
+"J")] <- "Jola"
+maltreat$ethnicity[startsWith(as.character(maltreat$ethnicity),"J")] <- "Jola"
+```
+
+### (ii). Replace ethnic = “Mandinka” if ethnic value starts with an “M”
+
+```{r include = TRUE}
+#Correct Jola
+levels(maltreat$ethnicity)[startsWith(levels(maltreat$ethnicity),
+"M")] <- "Mandinka"
+maltreat$ethnicity[startsWith(as.character(maltreat$ethnicity),"M")] <- "Mandinka"
+```
+
+### (iii). Replace ethnic = “Serahule” if ethnic value starts with an “S”
+
+```{r include = TRUE}
+#Correct Jola
+levels(maltreat$ethnicity)[startsWith(levels(maltreat$ethnicity),
+"S")] <- "Serahule"
+maltreat$ethnicity[startsWith(as.character(maltreat$ethnicity),"S")] <- "Serahule"
+```
+
+### (iv). Replace ethnic = “Wollof” if ethnic value starts with a “W”
+
+```{r include = TRUE}
+#Correct Jola
+levels(maltreat$ethnicity)[startsWith(levels(maltreat$ethnicity),
+"W")] <- "Wollof"
+maltreat$ethnicity[startsWith(as.character(maltreat$ethnicity),"W")] <- "Wollof"
+
+# Correct the feature enthic from corrected enthnicity
+maltreat$ethnic <- maltreat$ethnicity
+levels(maltreat$ethnic) <- levels(maltreat$ethnicity)
+tab1(maltreat$ethnic, col = "grey")
+
+# Change the feature enthnicity to numeric and categorical
+maltreat$ethnicity <- as.numeric(factor(maltreat$ethnicity,levels=unique(maltreat$ethnic),exclude = NULL))
+tab1(maltreat$ethnicity,col = "grey")
+```
