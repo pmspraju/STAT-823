@@ -89,19 +89,19 @@ $p(x) = \dfrac{\lambda^{x}e^{-\lambda}}{x!},\quad for \quad x=0,1,2 \dots n$
 
 ```{r}
 x <- seq(0, 5, 1)
-poisl = dpois(x, 1)
+poisl <- dpois(x, 1)
 plot(x, poisl, ylab = "f(x)", main = "Poisson pmf",pch=16,ylim=c(0,0.6),col="blue")
 lines(x, poisl,col="blue")
 text(x=which(poisl == max(poisl))[1],y=poisl[poisl == max(poisl)][1],"lambda=1",col="blue")
 
 par(new=TRUE)
-poisl = dpois(x, 2)
+poisl <- dpois(x, 2)
 plot(x, poisl, ylab = "f(x)", main = "Poisson pmf",pch=16,ylim=c(0,0.6),col="green")
 lines(x, poisl,col="green")
 text(x=which(poisl == max(poisl))[1],y=poisl[poisl == max(poisl)][1],"lambda=2",col="green")
 
 par(new=TRUE)
-poisl = dpois(x, 3)
+poisl <- dpois(x, 3)
 plot(x, poisl, ylab = "f(x)", main = "Poisson pmf",pch=16,ylim=c(0,0.6),col="red")
 lines(x, poisl,col="red")
 text(x=which(poisl == max(poisl))[1],y=poisl[poisl == max(poisl)][1],"lambda=3",col="red")
@@ -122,35 +122,87 @@ We can make below observations from below plots,
 x <- seq(0, 20, 1)
 #plot(x, dgeom(x, 0.2), type = "h", ylab = "f(x)", lwd = 2,
 #    main = "Geometric(0.2) pmf")
-geom = dgeom(x, 0.2)
+geom <- dgeom(x, 0.2)
 plot(x, geom, ylab = "f(x)", main = "Geometric pmf",pch=16,ylim=c(0,0.6),col="blue")
 lines(x, geom,col="blue")
 text(x=which(geom == max(geom))[1],y=geom[geom == max(geom)][1],"p=0.2",col="blue")
 
 par(new=TRUE)
-geom = dgeom(x, 0.4)
+geom <- dgeom(x, 0.4)
 plot(x, geom, ylab = "f(x)", main = "Geometric pmf",pch=16,ylim=c(0,0.6),col="green")
 lines(x, geom,col="green")
 text(x=which(geom == max(geom))[1],y=geom[geom == max(geom)][1],"p=0.4",col="green")
 
 par(new=TRUE)
-geom = dgeom(x, 0.6)
+geom <- dgeom(x, 0.6)
 plot(x, geom, ylab = "f(x)", main = "Geometric pmf",pch=16,ylim=c(0,0.6),col="red")
 lines(x, geom,col="red")
 text(x=which(geom == max(geom))[1],y=geom[geom == max(geom)][1],"p=0.6",col="red")
 ```
 
 ### Negative Binomial
-The negative binomial I have below has set $r = 1$, so it's identical to the geometric above.  Play around with $r$ and see how it changes.
+A **Negative binomial distribution** (also called the Pascal Distribution) is a discrete probability distribution, for random variables in a negative binomial experiment, that models the number of successes in a sequence of independent and identically distributed Bernoulli trials before a specified (non-random) number of failures (denoted r) occurs. We use below formula to derive this,
+
+$f(x) = {(x+r-1)_{C}}_{r}(1-p)^{r}p^{x} \quad for \quad x=0,1,\dots$
+
+We make below observations from below plots,
+
+- We keep the initial probability of success, p=0.4, as constant and vary the number of successes $r$ to observe the pattern as number of trials are increased.
+- As the number of successes $r$ increases, the highest probability decreases for a given number of trials. For example, for 20 trials as $r$ increases from 1 to 5, the highest probability $f(x)$ decreases from 0.4 to 0.08. 
+- When $r=1$, it is a special case of geometric distribution. 
+- As the number of successes $r$ increases, the number of trials should be more to get the highest probability. For example, As $r$ increases from 1 to 5, the number of trials needed increases from 0 to 5 to get the highest probability $f(x)$
 
 ```{r}
 x <- seq(0, 20, 1)
-plot(x, dnbinom(x,1,0.2), type = "h", ylab = "f(x)", lwd = 2,
-     main = "Negative Binomial(0.2) pmf")
+nbinom <- dnbinom(x,1,0.4)
+plot(x, nbinom, type = "p", ylab = "f(x)", pch=16,ylim=c(0,0.8),
+     main = "Negative Binomial(0.4) pmf",col="red")
+lines(x, nbinom,col="red")
+text(x=which(nbinom == max(nbinom))[1],y=nbinom[nbinom == max(nbinom)][1]+0.04,"r=1",col="red")
 
+par(new=TRUE)
+nbinom <- dnbinom(x,3,0.4)
+plot(x, nbinom, type = "p", ylab = "f(x)", pch=16,ylim=c(0,0.8),
+     main = "Negative Binomial(0.4) pmf",col="blue")
+lines(x, nbinom,col="blue")
+text(x=which(nbinom == max(nbinom))[1],y=nbinom[nbinom == max(nbinom)][1]+0.04,"r=3",col="blue")
+
+par(new=TRUE)
+nbinom <- dnbinom(x,5,0.4)
+plot(x, nbinom, type = "p", ylab = "f(x)", pch=16,ylim=c(0,0.8),
+     main = "Negative Binomial(0.4) pmf",col="green")
+lines(x, nbinom,col="green")
+text(x=which(nbinom == max(nbinom))[1],y=nbinom[nbinom == max(nbinom)][1]+0.04,"r=5",col="green")
 ```
 
 ## Continuous Distributions
+
+### Normal
+The **Normal distribution** is a type of continuous probability distribution for a real-valued random variable. Below are some of the properties of this distribution,
+
+- The mean, mode and median are all equal.
+- The curve is symmetric at the center (i.e. around the mean).
+ - Exactly half of the values are to the left of center and exactly half the values are to the right.
+- The total area under the curve is 1.
+
+We use below function to dervive this distribution,
+\
+$f(x) = \dfrac{1}{\sqrt{2 \pi \sigma^{2}}}e^{- \dfrac{(x-\mu)^{2}}{2\sigma^{2}}} \quad for \quad -\infty < x < \infty$
+
+We can make below observations,
+
+- As the standard deviation $\sigma$ increases, the curve flattens along the x-axis. suggesting, the values are scattered away from the mean.
+- As the $\sigma$ increases, the probability $f(x)$ is decreased. 
+
+```{r}
+x <- seq(-5, 5, 0.01)
+for (i in seq(1,4,0.8)){
+  nnorm <- dnorm(x, 0, i)
+  plot(x, nnorm, type = "l",xlim=c(-5,5),ylim=c(0,0.6), ylab = "f(x)", main = "Normal pdf",col="gray")
+  text(x=x[nnorm == max(nnorm)][1],y=nnorm[nnorm == max(nnorm)][1]+0.04,paste("sd=",i,sep = ""),col="gray")
+  par(new=TRUE)
+}
+```
 
 ### Exponential 
 Vary $\lambda$ and describe.
@@ -159,15 +211,6 @@ Vary $\lambda$ and describe.
 x <- seq(0, 10, 0.01)
 plot(x, dexp(x, 1), type = "l", ylab = "f(x)", lwd = 2, 
     main = "Exponential(1) pdf")
-
-```
-
-### Normal
-Vary $\sigma$ and see how the distribution changes.  If you make it too big, you may need to adjust the *x*-axis by making the sequence span a wider range than $-5$ to $5$.  You can use a trial-and-error approach to determing the proper limits for x for a given $\sigma$.
-
-```{r}
-x <- seq(-5, 5, 0.01)
-plot(x, dnorm(x, 0, 1), type = "l", ylab = "f(x)", main = "Normal(0, 1) pdf")
 
 ```
 
