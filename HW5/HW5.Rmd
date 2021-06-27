@@ -196,51 +196,154 @@ We can make below observations,
 
 ```{r}
 x <- seq(-5, 5, 0.01)
+cp = c("red","blue","green","gray")
+j <- 0
 for (i in seq(1,4,0.8)){
+  j <- j + 1
   nnorm <- dnorm(x, 0, i)
-  plot(x, nnorm, type = "l",xlim=c(-5,5),ylim=c(0,0.6), ylab = "f(x)", main = "Normal pdf",col="gray")
-  text(x=x[nnorm == max(nnorm)][1],y=nnorm[nnorm == max(nnorm)][1]+0.04,paste("sd=",i,sep = ""),col="gray")
+  plot(x, nnorm, type = "l",xlim=c(-5,5),ylim=c(0,0.6), ylab = "f(x)", main = "Normal pdf",col=cp[j])
+  text(x=x[nnorm == max(nnorm)][1],y=nnorm[nnorm == max(nnorm)][1]+0.02,bquote(paste(sigma,"=",.(i),sep = "")),col=cp[j])
   par(new=TRUE)
 }
 ```
 
 ### Exponential 
-Vary $\lambda$ and describe.
+The **Exponential distribution** is a probability distribution that describes time between events in a Poisson process, a process in which events occur continuously and independently at a constant average rate. There is a strong relationship between the Poisson distribution and the Exponential distribution. For example, let’s say a Poisson distribution models the number of births in a given time period. The time in between each birth can be modeled with an exponential distribution. We use below function to represent this distribution,
+
+$f(x) = \lambda e^{-\lambda x \quad for \quad x \in [0, \infty)}$
+
+We can make below observations,
+
+- In exponential distribution, $\lambda$ denotes the time between each event. 
+- We can see that as the $\lambda$ increases from 0.5 to 2, the probability of a succuess event, $f(x)$, increases from 0.5 to 2. 
+- We can also notice that, the probability of finding a success event reduces as we increase the number of trials. The rate of decrease in this probability is more as we increase the time between the events, that is $\lambda$
 
 ```{r}
 x <- seq(0, 10, 0.01)
-plot(x, dexp(x, 1), type = "l", ylab = "f(x)", lwd = 2, 
-    main = "Exponential(1) pdf")
-
+cp = c("red","blue","green","gray")
+j <- 0
+for (i in seq(0.5,2,0.5)){
+  j <- j + 1
+  nexp <- dexp(x, i)
+  plot(x, nexp,type = "l",xlim=c(0,10),ylim=c(0,2), ylab = "f(x)", main = "Exponential pdf",col=cp[j])
+  text(x=x[nexp == max(nexp)][1]+0.4,y=nexp[nexp == max(nexp)][1]-0.02,bquote(paste(lambda,"=",.(i),sep="")),col=cp[j])
+  par(new=TRUE)
+}
 ```
 
 ### Chisquare
-How do the degrees of freedom change the shape? Plot a few and explain.
+The chi-square distribution with k degrees of freedom is the distribution of a sum of the squares of k independent standard normal random variables. We use below notation to represent this distribution,
+
+If $Z_{1},\dots,Z_{k}$ are $k$ independent, standard normal random variables, chi-squared distribution is given by,
+\
+$Q = \sum\limits_{i=1}^{k}Z_{i}^{2}$
+
+We can make below observations,
+
+- $k$, degrees of freedom, is the only parameter in Chi-square distribution.
+- As we increase the $k$, the distribution goes skew towards the right and follows normal distribution.  
 
 ```{r}
 x <- seq(0, 20, 0.01)
-plot(x, dchisq(x, 6), type = "l", ylab = "f(x)", main = "Chi-square(6) pdf")
-
+j <- 0
+cp = c("red","blue","green","gray","black","purple")
+for (i in c(1,2,3,4,6,10)){
+  j <- j + 1
+  nchi <- dchisq(x, i)
+  plot(x, nchi,type = "l",xlim=c(0,20),ylim=c(0,0.5), ylab = "f(x)", main = "Chi-square pdf",col=cp[j])
+  par(new=TRUE)
+}
+legend( "topright", c("k=1", "k=2", "k=3", "k=4","k=6","k=10"), 
+text.col=cp )
 ```
 
-### Students t
+### Student's t
 
-How do the degrees of freedom change the shape?  Plot a few and explain.
+The **Student's t-distribution** is any member of a family of continuous probability distributions that arise when estimating the mean of a normally-distributed population in situations where the sample size is small and the population's standard deviation is unknown.The $t$ score is a ratio between the difference between two groups and the difference within the groups. The larger the t score, the more difference there is between groups. The smaller the t score, the more similarity there is between groups. We use below notation to represent this distribution,
+
+$t(v) = \dfrac{\bar{x}-\mu}{\sqrt{\dfrac{s^{2}}{v}}}$
+
+We can make below observations from the plots,
+
+- As the degrees of freedom increases, we can see the Student's T distribution tend towards the normal distribution. 
 
 ```{r}
 x <- seq(-5, 5, 0.01)
-plot(x, dt(x, 6), type = "l", ylab = "f(x)", main = "Student's t(6) pdf")
-
+j <- 0
+cp = c("red","blue","green","gray","black","purple","black")
+for (i in c(1,2,3,4,6,10)){
+  j <- j + 1
+  nstud <- dt(x, i)
+  plot(x, nstud,type = "l",xlim=c(-5,5),ylim=c(0,0.5), ylab = "f(x)", main = "Student's t pdf",col=cp[j])
+  par(new=TRUE)
+}
+plot(x, dnorm(x, 0, 1), type = "l",lty=3,lwd=2,xlim=c(-5,5),ylim=c(0,0.5), ylab = "f(x)",col="black")
+legend( "topright", c("k=1", "k=2", "k=3", "k=4","k=6","k=10","--- = normal"), 
+text.col=cp )
 ```
 
 ### F
 
-How do the degrees of freedom (numerator and/or denominator) change the shape?  Plot a few and explain.
+The F-distribution is a continuous probability distribution that arises frequently as the null distribution of a test statistic, most notably in the analysis of variance (ANOVA) and other F-tests. 
+
+We can make below observations,
+
+- If we increase either numerator or denominator, the plot tends towards the right with an increase in the probability. 
 
 ```{r}
 x <- seq(0, 6, 0.01)
-plot(x, df(x, 12, 15), type = "l", ylab = "f(x)", main = "F(2, 5) pdf")
+plot(x, df(x, 8, 15), type = "l", ylim=c(0,0.8), ylab = "f(x)", main = "F pdf",col="blue")
 
+par(new=TRUE)
+plot(x, df(x, 12, 15), type = "l",lty=3,ylim=c(0,0.8), ylab = "f(x)",col="blue")
+
+par(new=TRUE)
+plot(x, df(x, 10, 6), type = "l",ylim=c(0,0.8), ylab = "f(x)",col="red")
+
+par(new=TRUE)
+plot(x, df(x, 10, 8), type = "l",lty=3,ylim=c(0,0.8), ylab = "f(x)",col="red")
+
+legend( "topright", c("blue=change in numerator","green=change in denominator","... = increase in value"), text.col=c("blue","red","black") )
+```
+
+### Beta
+
+The **beta distribution** is a family of continuous probability distributions defined on the interval [0, 1] parameterized by two positive shape parameters, denoted by $\alpha$ and $\beta$, that appear as exponents of the random variable and control the shape of the distribution.
+
+```{r}
+x <- seq(0, 1, 0.01)
+j <- 0
+cp = c("red","blue","green","gray","purple")
+alpha = c(0.5,5,1,2,2)
+beta = c(0.5,1,3,2,5)
+for (i in seq(1,5)){
+  j <- j + 1
+  nbeta <- dbeta(x, alpha[i],beta[i])
+  plot(x, nbeta,type = "l",xlim=c(0,1),ylim=c(0,2.5), ylab = "f(x)", main = "Beta pdf",col=cp[j])
+  par(new=TRUE)
+}
+legend( "topright", c("a=0.5,b=0.5","a=5,b=1","a=1,b=3","a=2,b=2","a=2,b=5"), 
+text.col=cp )
+```
+
+### Logistic
+
+The **logistic distribution** is a continuous probability distribution. Its cumulative distribution function is the logistic function, which appears in logistic regression and feedforward neural networks. It resembles the normal distribution in shape but has heavier tails (higher kurtosis).
+
+```{r}
+x <- seq(-5, 20, 0.01)
+j <- 0
+cp = c("red","blue","green","gray","purple")
+loc = c(5,9,9,6,2)
+scl = c(2,3,4,2,1)
+for (i in seq(1,5)){
+  j <- j + 1
+  nlogis <- dlogis(x, loc[i],scl[i])
+  plot(x, nlogis,type = "l",xlim=c(-5,20),ylim=c(0,0.3), ylab = "f(x)", main = "Logistic pdf",col=cp[j])
+  par(new=TRUE)
+}
+legend( "topright", c("l=5,s=2","l=9,s=3","l=9,s=4","l=6,s=2","l=2,s=1"), 
+text.col=cp )
 ```
 
 ## Document Information.

@@ -1,0 +1,190 @@
+---
+title: "HW6 - Exploratory Data Analysis (EDA)"
+author: "Madhu Peduri"
+date: "`r format(Sys.time(), '%B %e, %Y')`"
+output:
+#  html_document:
+#    df_print: paged
+  pdf_document:
+    citation_package: natbib
+    fig_caption: yes
+    highlight: tango
+    number_sections: yes
+subparagraph: yes
+header-includes: \usepackage{hyperref} \usepackage{framed,xcolor} \definecolor{shadecolor}{rgb}{0.99,
+  0.95, 0.9} \renewcommand\arraystretch{1.5} \usepackage[none]{hyphenat} \raggedright
+  \usepackage{amsmath, amsthm, amssymb, bm}
+---
+
+  
+```{r setup, include=FALSE}
+library(knitr)
+knitr::opts_chunk$set(echo = TRUE)
+library(rmarkdown)
+library(graphics)
+library(ggplot2)
+library(MASS)
+library(Hmisc)
+library(epiDisplay)
+library(vcd)
+library(mnormt)
+options(digits = 3)
+opts_chunk$set(tidy.opts=list(width.cutoff=60), tidy=TRUE)
+```
+
+### 1.Use the built-in dataset cars.
+#### 1.(a) Create a scatter plot of speed versus distance  
+
+```{r}
+car_df <- cars
+plot(car_df$speed, 
+     car_df$dist,
+     type = "p", 
+     col  = "blue",
+     lwd  = 6, 
+     xlab = "Speed (miles per hour)", 
+     ylab = "Stopping Distance (feet)", 
+     col.lab = "dark green",
+     cex.lab = 1.5
+     )
+title(main = "Scatterplot of Speed versus Distance", 
+      cex.main = 1.5,
+      col.main = "red",
+      sub = "Using plot() in R",
+      cex.sub = 1
+      )
+axis(1,col.axis = "magenta")
+axis(2,col.axis = "magenta")
+```
+
+#### 1.(b) Create Figure 2
+
+```{r}
+car_df <- cars
+plot(car_df$speed, 
+     car_df$dist,
+     type = "p", 
+     col  = "blue",
+     lwd  = 6, 
+     xlab = "speed", 
+     ylab = "dist", 
+     col.lab = "dark green",
+     cex.lab = 1.5,
+     axes = FALSE
+     )
+title(main = "Scatterplot of Speed versus Distance", 
+      cex.main = 1.5,
+      col.main = "red",
+      sub = "Using plot() in R",
+      cex.sub = 1
+      )
+legend("topleft",
+       inset = 0.01,
+       title = "Distance vs. Speed",
+       c("Observation"),
+       col=c("blue"), 
+       pch=19,
+       horiz=TRUE
+       )
+axis(1)
+axis(2)
+box(lty=3,col="red",lwd=2)
+grid(lty=3)
+abline(lm(dist ~ speed,data=car_df))
+```
+
+### 2. Use the economics built-in dataset and library ggplot2. Plot the time series of unemployment
+
+```{r}
+ggplot(economics, aes(date,unemploy)) +
+       geom_line(size=0.8) +
+       xlab('date') +
+       ylab('Unemployed') +
+       theme(panel.background = element_rect(fill = 'white', 
+                                             colour = 'dark blue',
+                                             size=3),
+             panel.grid.major = element_line(colour = 'black', size = 0.2),
+             panel.grid.minor = element_line(colour = 'light gray'),
+             axis.ticks = element_line(size = 1),
+             axis.text.x = element_text(size = 15,face="bold"),
+             axis.text.y = element_text(size = 15,face="bold"),
+             axis.title.x = element_text(size = 15,face="bold"),
+             axis.title.y = element_text(size = 15,face="bold")
+             )
+```
+
+### 3. Use the built-in dataset survey
+
+#### 3.(a). Visualize survey dataset
+
+```{r}
+str(survey)
+describe(survey)
+des(survey)
+summ(survey)
+codebook(survey)
+summary(survey)
+```
+
+### 3.(b) Generate frequency for features Sex, Exer and Smoke
+
+```{r}
+table(survey$Sex)
+tab1(survey$Sex)
+table(survey$Exer)
+tab1(survey$Exer)
+table(survey$Smoke)
+tab1(survey$Smoke)
+```
+
+### 3.(c) Produce contingency tables
+
+```{r}
+table(survey$Sex, survey$Exer, useNA = "ifany")
+chisq.test(survey$Sex, survey$Exer, correct=FALSE)
+
+table(survey$Smoke, survey$Exer, useNA = "ifany")
+chisq.test(survey$Smoke, survey$Exer, correct=FALSE)
+
+table(survey$Smoke, survey$Sex, useNA = "ifany")
+chisq.test(survey$Smoke, survey$Sex, correct=FALSE)
+```
+
+We can make below observation,
+
+- We have p-value = 0.5 from chi-test between features Somke and Exercies. This is high compared to significant value 0.05 and we can say, there is high correlation between these features.
+- We have p-value = 0.3 from chi-test between features Somke and Sex. This is high compared to significant value 0.05 and we can say, there is correlation between these features.
+- We have p-value = 0.06 from chi-test between features somke and Sex. This is not high  and we can say, there is correlation between these features 
+
+### 3.(d) Correlation matrix
+
+```{r}
+data("survey")
+ff <- lm(Height ~ Wr.Hnd, data = survey)
+summary(ff)
+# calculation of Pearson' correlation coefficient
+cor(survey$Wr.Hnd, survey$Height, use = "complete")
+
+# This code was used to produce the correlation
+# matrix
+library(psych)
+dat0 <- survey[, c("Pulse", "Age", "Height", "NW.Hnd",
+"Wr.Hnd")]
+pairs.panels(dat0)
+
+summary(lm(NW.Hnd ~ Wr.Hnd, data = survey))
+```
+
+We can make below observations,
+
+- Between features, hand span and hight, we have correlation factor as 0.6. By this we can say, there is medium level of correlation, 1 being perfecly correlated.
+- We have R-squared = 0.361. From this we can say that the linear regression predictions of the feature height using hand-span are not good. Low R-square suggest that, there errors are hight between actual and predictions. This is substantiated by the fact that correlation between these two is not high. 
+- From the Correlation matrix we can say, feature pair 'Wr.Hnd' and 'NW.Hnd' are hightly correlated with 0.95 value. R-squared for the linear regression between these two features is 0.95 which substantiates the correlation. 
+
+## Document Information.
+
+All of the statistical analyses in this document will be performed using `r R.version.string`.  R packages used will be maintained using the [packrat](http://rstudio.github.io/packrat/) dependency management system.  
+
+```{r session-info}
+sessionInfo()
+```
