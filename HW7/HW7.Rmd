@@ -1,0 +1,261 @@
+---
+title: "HW7 - Statistical Inference"
+author: "Madhu Peduri"
+date: "`r format(Sys.time(), '%B %e, %Y')`"
+output:
+#  html_document:
+#    df_print: paged
+  pdf_document:
+    citation_package: natbib
+    fig_caption: yes
+    highlight: tango
+    number_sections: yes
+subparagraph: yes
+header-includes: \usepackage{hyperref} \usepackage{framed,xcolor} \definecolor{shadecolor}{rgb}{0.99,
+  0.95, 0.9} \renewcommand\arraystretch{1.5} \usepackage[none]{hyphenat} \raggedright
+  \usepackage{amsmath, amsthm, amssymb, bm}
+---
+
+  
+```{r setup, include=FALSE}
+library(knitr)
+knitr::opts_chunk$set(echo = TRUE)
+library(rmarkdown)
+library(graphics)
+library(ggplot2)
+library(MASS)
+library(Hmisc)
+library(epiDisplay)
+library(vcd)
+library(mnormt)
+library(MASS)
+library(car)
+library(ggpubr)
+library(PairedData)
+options(digits = 3)
+opts_chunk$set(tidy.opts=list(width.cutoff=60), tidy=TRUE)
+```
+
+### 1.Analyzing Data with a Categorical Outcome.
+#### 1.1 (a) Enter the data into R in an expanded form
+
+```{r}
+cat <- c(rep('Yes',630), rep('No',670))
+vec <- factor(cat)
+binge <- data.frame(vec)
+names(binge) <- c('BingeDrink')
+head(binge)
+```
+
+#### 1.1 (b) Frequency charts
+
+```{r}
+par(mfrow=c(1,2))
+t1 <- tab1(binge,main='')
+t2 <- tab1(binge,bar.values = 'percent',main='')
+mtext('Binge Drinking on Campus:',side=3,line=2.4,at=-0.8,cex=1.4)
+mtext('A Survey of N = 1300 Undergraduates',line=1,side=3,at=-0.8,cex=1.4)
+```
+
+#### 1.2 (a) Prop & Binomial test
+
+```{r}
+prop.test(x=length(binge$BingeDrink[binge$BingeDrink == 'Yes']),n=length(binge$BingeDrink),p=0.5)
+binom.test(x=length(binge$BingeDrink[binge$BingeDrink == 'Yes']),n=length(binge$BingeDrink),p=0.5)
+```
+#### Observations:
+- A binomial test compares a sample proportion to a hypothesized proportion. The test has the following null and alternative hypothesis. 
+- We have 630 number of successes in an experiment with total number of 1300 trials with a probability of 1/2 for a success for a given trial.
+- We obtained a p-value = 0.3 (> 0.05) in our binomial test, which suggests that we can accept the null hypothesis and conclude that we got 'Yes' in our experiment. 
+
+#### 1.2 (b)(i) Chi-square goodness
+
+```{r}
+# When probability of happeining Yes and No are equal to 1/2
+prob <- c(length(binge$BingeDrink[binge$BingeDrink == 'Yes']),length(binge$BingeDrink[binge$BingeDrink == 'No']))
+chisq.test(prob, p = c(1/2, 1/2))
+chisq.test(prob, p = c(1/3, 2/3))
+```
+
+#### Observations:
+- The chi-square goodness of fit test is used to compare the observed distribution to an expected distribution, in a situation where we have two or more categories in a discrete data. In other words, it compares multiple observed proportions to expected probabilities.
+- For the hypothesis $H_{0}:p_{1} = p_{2}$, with same probability for both categorical values, we have p-value = 0.3 (> 0.05). This says that, observed proportions are not different from the expected proportions.
+- For the hypothesis $H_{1}:p_{1} \neq p_{2}$, with different probability for both categorical values, we have p-value very less. This says that, observed proportions are different from the expected proportions.
+
+#### 1.2 (b)(ii)
+
+```{r}
+pi = 0.247
+chisq.test(prob, p = c(pi, 1-pi))
+```
+
+#### Observations:
+- If we use the proportion = 0.247 by NSDUH as expected hypothesis, we are getting a less p-value. We can say this, our actual proportion do not comply with expected hypothesis.
+- We can see 0.247*1300 = 321.1 (< 630) which is less than the actual number of successes. 
+
+#### 1.2 (c)
+
+```{r}
+prop.test(x = 630, n = 1300, p = 0.247, alternative = "g")
+binom.test(x = 630, n = 1300, p = 0.247, alternative = "g")
+```
+
+#### Observations:
+- We can see in both the cases we have p-value is less. 
+- If we have proportion = 0.5 (>0.247), we have p-value that is sufficient which can be equivalent to hypothesis.
+
+#### 1.3(a) Read Sales Data
+
+```{r}
+sales <- read.csv("sales.csv")
+tabs <- xtabs(~Region + Sport, data = sales)
+tabs
+```
+
+#### 1.3(b) Mosaic Plot
+
+```{r}
+ptab <- prop.table(tabs)
+ptab
+
+mosaic(ptab,zero_size = 0)
+```
+
+#### Observations:
+- We can observe that Mosaic plot shows the equivalent densities. 
+- We can see that, Region B has highes sales for the Summer sport gear.
+
+#### 1.3(c) Chi-square test of independence
+
+```{r}
+chisq.test(tabs)
+```
+
+#### Observations:
+- We can see very less p-value which shows the less dependency between Sales of sports gear and geographic region.
+
+### 2. Analysis of Continuous Outcome Data
+
+#### 2.1(a) One-Sample Tests
+
+```{r}
+car <- c(19, 26, 24, 21, 24, 23, 26, 24, 23, 20, 21, 24, 18, 21, 20, 23, 24, 26, 25, 19, 24, 23, 27, 24, 26, 25, 20, 21, 19, 23)
+ttest <- t.test(car, mu=25)
+sprintf("p-value of t-test: %.10f",ttest$p.value)
+sprintf("Mean of the sample: %.2f", mean(car))
+sprintf("Standard deviation of the sample: %.2f", sd(car))
+
+plot(car, type="l", xlab="trial", ylab="mpg", main="mileage")
+par(new = TRUE)
+abline(h=mean(car), col="blue",lty = 3)
+```
+
+#### Observations:
+- We can see p-value of our t-test is less (inferior) to the significant value 0.05. This suggest that null hypothesis is incorrect and the hypothesis $H_{1}: \mu \neq 25$ is correct. 
+
+#### 2.1(b) Shaprio test
+
+```{r}
+qqnorm(car, pch = 1, frame = FALSE)
+qqline(car, col = "steelblue", lwd = 2)
+ggqqplot(car)
+shapirotest <- shapiro.test(car)
+sprintf("P-value of Shapiro normality test:%.4f",shapirotest$p.value)
+```
+
+#### Observations:
+- From qqplots, we can see the sample quantiles follow a straight line and fall with in the range. 
+- The p-value of shapiro.test is 0.09 which is greater than significant value 0.05 suggests that our data follow normal distribution.
+
+#### 2.1(c) t - test
+
+```{r}
+ttest <- t.test(car, alternative='less', mu=25)
+ttest
+sprintf("P-value of t-test test:%.5f",ttest$p.value)
+```
+
+#### Observations:
+- There is insufficient evidence to conclude that the average fuel economy of 2018 Sedans is less than the 25 mpg reported by Company A (p = 0.00002, 95%CI : -Inf 23.5).
+
+### 2.2(a) Dependent Samples Tests
+
+```{r}
+id <- c(1:10)
+pre <- c(899.63, 913.51, 897.05, 889.18, 903.2, 916.06, 899.08, 892.75, 901.47, 902.63)
+post <- c(899.53, 899.38, 879.25, 867.35, 897.97, 921.42, 895.52, 893.95, 889.44, 898.14)
+datap <- data.frame(cbind(id, pre, post))
+paired.plotProfiles(datap, "pre", "post") + 
+  geom_line(color="blue") +
+  theme(panel.background = element_rect(fill = 'white', 
+                                             colour = 'dark blue',
+                                             size=3),
+        axis.text.x = element_text(size = 15,face="bold"),
+        axis.text.y = element_text(size = 15,face="bold"),
+        panel.grid.major = element_line(colour = 'light gray', size = 0.4),
+        panel.grid.minor = element_line(colour = 'light gray', size = 0.4)
+       )
+```
+
+### 2.2(b) Dependent Samples Tests
+#### (i) Box plots
+
+```{r}
+sprintf("Pre-swim time - Mean:%.2f and Standard deviation:%.2f",mean(datap$pre),sd(datap$pre))
+sprintf("Post-swim time - Mean:%.2f and Standard deviation:%.2f",mean(datap$post),sd(datap$post))
+par(mfrow=c(1,2))
+boxplot(x=datap$pre,xlab='pre',ylab='times')
+boxplot(x=datap$post,xlab='post')
+```
+
+#### (ii) Box plots
+
+```{r}
+paired_dif <- datap$pre - datap$post
+sprintf("Paired differences - Mean:%.2f and Standard deviation:%.2f",mean(paired_dif),sd(paired_dif))
+boxplot(x=paired_dif,xlab='paired diff',ylab='times')
+```
+
+#### (iii) Normality test
+
+```{r}
+qqnorm(paired_dif, pch = 1, frame = FALSE)
+qqline(paired_dif, col = "steelblue", lwd = 2)
+ggqqplot(paired_dif)
+shapirotest <- shapiro.test(paired_dif)
+sprintf("P-value of Shapiro normality test:%.4f",shapirotest$p.value)
+```
+
+#### Observation
+- From the plots and shapiro test's p-value = 0.78 indicates the nature of normality in paired differences
+
+#### (iii) t - test
+
+```{r}
+datap$diff <- pre - post
+t.test(pre, post, paired = TRUE, alternative = "greater")
+t.test(datap$diff, alternative = "greater",mu=0)
+```
+
+#### Observation
+- There is insufficient evidence to conclude that the
+training program is effective at reducing swim times for Men’s 1500 Freestyle
+(p = 0.01). The program, on average, decreased swim time by 7.26 seconds (95% CI
+on difference: pre - post > 0: 2.15  Inf)."
+
+### 2.3 Wilcoxon Signed-Rank Test
+
+```{r}
+wilcox.test(datap$diff, alternative = "greater",mu=0)
+```
+
+#### Observation
+- For wilcox test, we have p-value=0.02 which is similar to t-test but less than the significant value 0.05. This suggest that, our initial hypothesis of improve in the swim times is incorrect. 
+
+## Document Information.
+
+All of the statistical analyses in this document will be performed using `r R.version.string`.  R packages used will be maintained using the [packrat](http://rstudio.github.io/packrat/) dependency management system.  
+
+```{r session-info}
+sessionInfo()
+```
