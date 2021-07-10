@@ -34,6 +34,7 @@ library(ggpubr)
 library(PairedData)
 library(lmtest)
 library(xtable)
+library(faraway)
 options(digits = 3)
 opts_chunk$set(tidy.opts=list(width.cutoff=60), tidy=TRUE)
 ```
@@ -104,9 +105,9 @@ plot(fitted(lm3), abs(residuals(lm3)))
 abline(h = 0)
 
 par(mfrow = c(1, 3))
-plot(lm1,which=c(1))
-plot(lm2,which=c(1))
-plot(lm3,which=c(1))
+plot(lm1,which=c(1),main='Residuals vs Fitted lm1',caption='')
+plot(lm2,which=c(1),main='Residuals vs Fitted lm1',caption='')
+plot(lm3,which=c(1),main='Residuals vs Fitted lm1',caption='')
 
 # Linearity of residuals
 par(mfrow = c(1, 3))
@@ -137,7 +138,50 @@ dwtest(lm3)
 - If we see the residual plots, model with infection risk is better compared to other two. 
 - Normality: The p-values of shapiro test are less than the significant value < 0.05. Low p-values reject the null hypothesis of normality and that suggests that residuals are not following normal distribution. However, if we see the Qplots, we can see the normality, but presence of outliers could be the reason behind the poor p-values.
 - Homoscedasticity: ncvtest has null hypothesis of constant variance for residuals. We have p-values less than the significant value 0.05. This shows the variance is changing basing on the change in the fitted valus. 
-- Correlation: Dwtest has the null hypothesis  that the residuals from a linear regression are uncorrelated. Our test has p-values higher than 0.05 suggesting the presence of correlation between dependent and independent variables. 
+- Correlation: Dwtest has the null hypothesis  that the residuals from a linear regression are uncorrelated. Our test has p-values higher than 0.05 supports the null hypothesis suggesting that dependent and independent variables are not autocorrelated. DW=2 also suggests the no autocorrelation. 
+
+### Problem 4
+
+```{r}
+# Halfnormal quantiles to see influencing points
+par(mfrow = c(1, 3))
+halfnorm(cooks.distance(lm1),main='Infection risk')
+halfnorm(cooks.distance(lm2),main='Services')
+halfnorm(cooks.distance(lm3),main='Chest Xray')
+
+# Influencing points 
+lm1I <- influence.measures(lm1)
+which(apply(lm1I$is.inf, 1, any))
+
+# Refit the model without the case 47 and 112
+#senic1 <- senic[!(senic$id %in% c(47,112)),]
+lm1_r <- lm(stay ~ inf_risk, data=senic, subset=-c(47,112))
+str(summary(lm1_r))
+
+# Prediction interval for the old model
+senic[c('inf_risk','stay')][c(47,112),]
+fitted.values(lm1)[c(47,112)]
+newdata <- data.frame(inf_risk = c(6.5,5.9))
+pio <-predict(lm1, newdata = newdata, interval = "prediction")
+row.names(pio) <- c('47','112')
+pio
+
+# Prediction interval for the new model
+pi <-predict(lm1_r, newdata = newdata, interval = "prediction")
+row.names(pi) <- c('47','112')
+pi
+```
+
+#### Observation
+- The R2 value has improved from 2.8 to 3 for the refit model. The pr value of refit model is less than the original but not significantly less.
+- Original 'Length of stay' values are Y=(19.56, 17.94) if their 'Risk of infection' values are X = (6.5,5.9). Using the refit model, we get the prediction intervals as (8.32, 13.3), (7.97, 12.9) for X respectively. 
+- We can say that, original values do not fall under the bounds of the prediction intervals. 
+- If we can compare the prediction intervals of original and refit model for 'Infection risk', we can say original model's interval are better than refit model. Removing the points (47,112) did not perform better. 
+
+### Problem 5
+
+```{r}
+```
 
 ## Document Information.
 
