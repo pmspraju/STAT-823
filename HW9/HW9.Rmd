@@ -35,6 +35,8 @@ library(PairedData)
 library(lmtest)
 library(xtable)
 library(faraway)
+library(leaps)
+library(psych)
 options(digits = 3)
 opts_chunk$set(tidy.opts=list(width.cutoff=60), tidy=TRUE)
 ```
@@ -46,6 +48,7 @@ opts_chunk$set(tidy.opts=list(width.cutoff=60), tidy=TRUE)
 senic <- read.delim("SENIC.txt", header=FALSE,sep = "")
 names(senic) <- c('id','stay','age','inf_risk', 'cul_r','xray_r','beds','med','region','daily_avg','nurses','services')
 head(senic)
+summary(senic)
 
 # lm for infection risk
 lm1 <- lm(stay ~ inf_risk, data=senic)
@@ -170,6 +173,11 @@ pio
 pi <-predict(lm1_r, newdata = newdata, interval = "prediction")
 row.names(pi) <- c('47','112')
 pi
+
+# Assumptions of refit model 
+shapiro.test(residuals(lm1_r))
+ncvTest(lm1_r)
+dwtest(lm1_r)
 ```
 
 #### Observation
@@ -177,11 +185,104 @@ pi
 - Original 'Length of stay' values are Y=(19.56, 17.94) if their 'Risk of infection' values are X = (6.5,5.9). Using the refit model, we get the prediction intervals as (8.32, 13.3), (7.97, 12.9) for X respectively. 
 - We can say that, original values do not fall under the bounds of the prediction intervals. 
 - If we can compare the prediction intervals of original and refit model for 'Infection risk', we can say original model's interval are better than refit model. Removing the points (47,112) did not perform better. 
+- However, for refit mode, the assumptions are better than the original model.
+- Normality : Refit model has p-value > 0.05 which satifies the null hypothesis of Normal distribution for model's residuals.
+- Homoscedasticity : Refit model has p-value > 0.05 which satisfies the null hypothesis of constant variance. Refit model has constant variance between dependent and independent variables.
+- Collinearity : We have p-value > 0.05 which satisfies the null hypothesis of uncorrelation. 
 
 ### Problem 5
 
 ```{r}
+y <- "stay"
+
+#regsubsets
+x1 <- c('id','log(age)','inf_risk', 'log(cul_r)','log(xray_r)','log(beds)','med','log(region)','log(daily_avg)','log(nurses)','log(services)')
+
+fm <- as.formula(paste(y,paste(x1,collapse="+"),sep="~"))
+b <- regsubsets(fm,force.in = 1,data=senic)
+rs <- summary(b)
+kable(with(rs, cbind(which, rss, adjr2, cp, bic)), digits = 4)
+
+# Model with subset1
+x <- c('log(id)','log(age)','inf_risk', 'log(xray_r)','log(region)','log(daily_avg)','log(nurses)','log(services)')
+#'id','log(cul_r)','log(beds)','med',
+
+fm <- as.formula(
+  paste(y,paste(x,collapse="+"),sep="~")
+)
+mod <- lm(fm, data=senic, subset=-c(47,112,43,80,52,78,26,81,54))
+xtable(summary(mod))
+summary(mod)
 ```
+
+#### Observations 
+- We can observe from the regsubsets, we have lowest BIC, Mallow's Cp and high adjusted R2 when features 'cultures performed', 'number of beds' and 'region' are omitted.
+- After we remove the features suggested by regsubsets, we use the log transformation to normalize the features that have high values. 
+- We remove the influencing points and perform the regression model on the selected set of features. 
+
+### Problem 6
+
+```{r}
+# Halfnormal quantiles to see influencing points
+halfnorm(cooks.distance(mod),main='Half normal plot')
+
+# Influencing points 
+modI <- influence.measures(mod)
+which(apply(modI$is.inf, 1, any))
+
+#Correlation
+dat0 <- senic[, c('age','inf_risk', 'xray_r','region','daily_avg','nurses','services')]
+pairs.panels(dat0)
+
+# Assumptions
+shapiro.test(residuals(mod))
+ncvTest(mod)
+dwtest(mod)
+
+# Residual plots 
+par(mfrow = c(1, 2))
+plot(mod,which=c(1),main='Residuals vs Fitted',caption='')
+influencePlot(mod, id=list(n=3), main='Influence plot')
+```
+
+#### Observations
+- We can see the influencing points from influencer plot and halfnormal plot. We have removed the points for our model.
+- From pair plots, we can see that feature set (daily-average, nurses), (daily-average, services), (nurses, services) has a positive correlation. 
+- Normality: We have p-value(=0.5)  > 0.05 significant value suggesting a normal distribution for the residuals of our final model.
+- Homoscedasticity: We have p-value(=0.8) > 0.05 suggesting a constant variance between dependent and independent variables.
+- Collinearity: We have p-value(=0.3) > 0.05 significant value suggesting uncorrelation between dependent and independent variables. 
+
+### Problem 7
+
+- We have a dataset which has below sets of features and the target label that will be predicted.
+- Features:
+  - Id number
+  - Age
+  - Infection risk
+  - Routine culturing ratio
+  - Routine Chest x-ray ratio
+  - Number of beds
+  - Medical shcool afflication
+  - Geographic region
+  - Average daily census
+  - Number of nurses
+  - Available facilities and services. 
+- Target:
+  - Length of Stay
+- We created a model with the features and tested for normality, Constant variance and collinearity and found our assumptions were less than significant values and tests were negative.
+- For a better prediction model, our assumptions should be positive. We call difference between fitted values and actual values target variables as residuals. A better prediction model should hae residuals forllow normality, constant variance and uncorrelated.
+- We used halfnormal test and determined the influencing points and built our prediction model with subset of data by omitting the influencing points.
+- We observed few features are high in scale compared to others. Used log transformation to normalize the out of scale features.
+- We used regsubsets method to determine the best set of variables for our model. We used parameters BIC, Mallow's Cp and adjusted R2 to determine the best set of variables out of the given set. Below are the best set of features with lowest BIC, Cp and highest adjusted R2. 
+- Best set of features:
+  - age
+  - inf_risk
+  - xray_r
+  - region
+  - daily_avg
+  - nurses
+  - services
+- By using above set of variables, we get the Adjusted R2 = 0.64 and assumptions normality, constant variance and Collinearity are tested positive.
 
 ## Document Information.
 
