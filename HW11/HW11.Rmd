@@ -1,0 +1,219 @@
+---
+title: "HW11 - Logistic Regression"
+author: "Madhu Peduri"
+date: "`r format(Sys.time(), '%B %e, %Y')`"
+output:
+  pdf_document:
+    citation_package: natbib
+    fig_caption: yes
+    highlight: tango
+    number_sections: yes
+  html_document:
+    df_print: paged
+subparagraph: yes
+header-includes: \usepackage{hyperref} \usepackage{framed,xcolor} \definecolor{shadecolor}{rgb}{0.99,
+  0.95, 0.9} \renewcommand\arraystretch{1.5} \usepackage[none]{hyphenat} \raggedright
+  \usepackage{amsmath, amsthm, amssymb, bm}
+---
+
+  
+```{r setup, include=FALSE}
+library(knitr)
+knitr::opts_chunk$set(echo = TRUE)
+library(rmarkdown)
+library(graphics)
+library(ggplot2)
+library(MASS)
+library(Hmisc)
+library(epiDisplay)
+library(vcd)
+library(mnormt)
+library(MASS)
+library(car)
+library(ggpubr)
+library(PairedData)
+library(lmtest)
+library(xtable)
+library(faraway)
+library(leaps)
+library(psych)
+library(Matrix)
+options(digits = 3)
+opts_chunk$set(tidy.opts=list(width.cutoff=60), tidy=TRUE)
+```
+
+### Problem 1(a) 
+
+```{r}
+
+# Independent variable x
+x <- seq(90,160,1)
+
+# coefficients of linear predictor
+intercept <- -25
+coef1 <- 0.2
+
+# link function, mean response function of a logistic regression model
+mrf <- function(var){
+  val <- exp(-25 + 0.2*var)/(1 + exp(-25 + 0.2*var))
+  val
+}
+
+# Response variable
+y <- sapply(x, mrf)
+
+#plot the model
+plot(x,y,type="l", col="blue",main="Mean response function")
+
+lm1 <- glm(y~x,family=binomial)
+par(mfrow = c(2, 2))
+plot(lm1)
+```
+
+### Problem 1(b) 
+
+```{r}
+# logit(x) = log(x/(1-x))
+x_val <- (logit(0.5) - intercept)/coef1
+sprintf("Value of x when probability Pr(Y=0.5) is: %.2f",x_val)
+
+# Compare with glm model
+dose.p(lm1,p=0.5)
+```
+
+### Problem 1(c)
+
+```{r}
+# Odds when x=150
+o1 <- mrf(150)/(1-mrf(150))
+sprintf("Odds when x=150: %.3f",o1)
+
+# Odds when x=151
+o2 <- mrf(151)/(1-mrf(151))
+sprintf("Odds when x=151: %.3f",o2)
+
+# Ratio of odds 
+r <- o2/o1
+sprintf("Ratio of odds 151 to 150: %.3f",r)
+sprintf("exp of coefficient: %.3f",exp(coef1))
+```
+
+#### Observation
+- The ratio of odds for two values x=151 to x=150, a unit measure in x, is equal to the exp(coefficient) of the linear predictor.
+
+### Problem 2(a)
+
+```{r}
+# read the data
+q2 <- read.table("Q2.txt", quote = "\"", comment.char = "")
+colnames(q2) <- c("y", "income", "age")
+
+# print summary
+str(q2)
+mod2 <- glm(y ~ income + age, family = binomial(link = "logit"), data = q2)
+summary(mod2)
+str(summary(mod2))
+
+# Coefficients
+mod2$coefficients
+sprintf("Beta0(Intercept):%.4f",mod2$coefficients[1])
+sprintf("Beta1(Coefficient1):%.4f",mod2$coefficients[2])
+sprintf("Beta2(Coefficient2):%.4f",mod2$coefficients[3])
+
+# plot the model
+par(mfrow = c(2, 2))
+plot(mod2)
+```
+
+### Problem 2(b)
+
+```{r}
+
+# Compute linear predictor
+eq <- function(i,a){
+  mod2$coefficients[1] + mod2$coefficients[2]*i + mod2$coefficients[3]*a
+}
+
+#compute probabilities keeping age constant
+p1 <- ilogit(eq(32,3))
+p2 <- ilogit(eq(33,3))
+
+# Compute the odds
+o1 <- p1/(1-p1)
+o2 <- p2/(1-p2)
+
+# Compare Ratio of odds and exp(intercept)
+o2/o1
+exp(mod2$coefficients[2])
+
+#compute probabilities keeping age constant
+p1 <- ilogit(eq(32,3))
+p2 <- ilogit(eq(32,4))
+
+# Compute the odds
+o1 <- p1/(1-p1)
+o2 <- p2/(1-p2)
+
+# Compare Ratio of odds and exp(intercept)
+o2/o1
+exp(mod2$coefficients[3])
+```
+
+#### Observation
+- exp(beta1): This is the coefficient for income. We can see a unit change in the income predictor, by keeping age as constant) makes the ratio of odds(income) equal to the exp(beta1). 
+- exp(beta2): This is the coefficient for age We can see a unit change in the age predictor, by keeping income as constant) makes the ratio of odds(age) equal to the exp(beta2).
+
+### Problem 2(c)
+
+```{r}
+
+# prob for income=50, age=3 using coefficients
+ilogit(eq(50,3))
+
+# prob for income=50, age=3 using predict method
+predict(mod2, newdata = data.frame(income = 50, age = 3),type = "response")
+
+pr1 <- predict(mod2, newdata = data.frame(income = 50,
+age = 3), se = T)
+
+ilogit(c(pr1$fit - 1.96 * pr1$se.fit, pr1$fit + 1.96 *
+pr1$se.fit))
+
+```
+
+### Problem 2(d)
+
+```{r}
+
+#using likelihood approach
+confint(mod2)
+
+# 95% CI for using normal approximations
+c(0.0677 - 1.96*0.0281, 0.0677 + 1.96*0.0281)
+c(0.5986 - 1.96*0.3901, 0.5986 + 1.96*0.3901)
+```
+
+#### Observations
+- Income: For every unit increase in this variable, the odds of buying the car increases by approximately 1.07 with 95% certainity that coefficient is with in the values (0.0195  0.132)
+- Age: For every unit increase in this variable, the odds of buying the car increases by approximately 1.82 with 95% certainity that coefficient is with in the values (-0.1222  1.447)
+
+### Problem 2(e)
+
+```{r}
+deviance <-  mod2$null.deviance - mod2$deviance
+sprintf("Deviance of the logistic model: %.3f",deviance)
+
+anova(mod2,test="Chisq")
+```
+
+#### Observation
+- We can see the model deviance is not very far from the null (saturated model) deviance. This suggest a good fit for our model.
+- We can see less p-values for the predictors in our anova model, suggesting a good fit. 
+
+## Document Information.
+
+All of the statistical analyses in this document will be performed using `r R.version.string`.  R packages used will be maintained using the [packrat](http://rstudio.github.io/packrat/) dependency management system.  
+
+```{r session-info}
+sessionInfo()
+```
