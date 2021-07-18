@@ -3,13 +3,13 @@ title: "HW12 - Poisson Regression"
 author: "Madhu Peduri"
 date: "`r format(Sys.time(), '%B %e, %Y')`"
 output:
-  html_document:
-    df_print: paged
   pdf_document:
     citation_package: natbib
     fig_caption: yes
     highlight: tango
     number_sections: yes
+  html_document:
+    df_print: paged
 subparagraph: yes
 header-includes: \usepackage{hyperref} \usepackage{framed,xcolor} \definecolor{shadecolor}{rgb}{0.99,
   0.95, 0.9} \renewcommand\arraystretch{1.5} \usepackage[none]{hyphenat} \raggedright
@@ -75,6 +75,105 @@ sprintf("Residual deviance of the poisson model : %.3f",sumpois$deviance)
 sprintf("Residual degrees of freedom of the poisson model : %.3f",sumpois$df.residual)
 print("Pseudo R2 (Mcfadden) of the model : 0.943")
 ```
+
+### Problem 1(b)
+
+```{r}
+sprintf("Null deviance of the model : %.3f",poismod$null.deviance)
+sprintf("Deviance of the model residuals : %.3f",poismod$deviance)
+
+devresd <- round(residuals(poismod, type = "deviance"), 3)
+devresd
+
+stddevres <- rstandard(poismod)
+stddevres
+
+sprintf("Chi-square goodness-of-fit value : %.3f",sum(devresd^2))
+
+par(mfrow = c(1, 2))
+plot(log(predict(poismod)),devresd, ylab="residuals")
+abline(h=0)
+plot(log(predict(poismod)),stddevres, ylab="Standardized residuals")
+abline(h=0)
+
+# standardized Pearson's residuals
+pearson.resid <- round(resid(poismod, type = "pearson"), 3)
+pearson.resid
+
+stdpearsons <- rstandard(poismod, type = "pearson")
+stdpearsons
+
+sprintf("Pearson goodness-of-fit value : %.3f",sum(pearson.resid^2))
+
+par(mfrow = c(1, 2))
+plot(log(predict(poismod)),pearson.resid, ylab="pearson residuals")
+abline(h=0)
+plot(log(predict(poismod)),stdpearsons, ylab="pearson Standardized residuals")
+abline(h=0)
+
+# expected <- fitted.values(docm1, type='response')
+expected <- round(predict(poismod, type = "response"), 2)
+expected
+
+par(mfrow = c(1, 2))
+plot(doc$deaths, ylab="Actual")
+plot(expected, ylab="Predicted")
+```
+
+#### Observations
+- Outliers will be 2 standard deviations away from mean. We do not have standard residuals more than +2 or -2 suggesting no outliers. 
+- We do not see much difference between actual and predicted values. 
+
+### Problem 1(c)
+
+```{r}
+kable(cbind(doc[, c(1, 3, 4, 5)], expected, pearson.resid, devresd))
+```
+
+### Problem 1(d)
+
+```{r}
+# Chi square
+pchisq(deviance(poismod), df.residual(poismod), lower = F)
+deviance(poismod)
+pr <- residuals(poismod,"pearson")
+sum(pr^2)
+
+# poisson goodness of fit values
+poisgof(poismod)
+
+# plots
+par(mfrow = c(2, 2))
+plot(log(fitted(poismod)),(doc$deaths-fitted(poismod))^2,xlab = expression(hat(mu)),ylab = expression((y-hat(mu))^2))
+abline(0,1)
+halfnorm(residuals(poismod))
+shapiro.qqnorm(residuals(poismod, type = "deviance"))
+influencePlot(poismod)
+
+# Confidence intervals of each predictor
+kable(cbind(summary(poismod)$coef, confint(poismod)))
+
+# Significance of each predictor relative to full model
+kable(drop1(poismod, test = "F"))
+
+# Goodness of fit measures using anova
+kable(anova(poismod, test = "Chisq"))
+
+# mean and variance
+phi <- sum(pr^2)/df.residual(poismod)
+round(c(phi,sqrt(phi)),4)
+mean(fitted(poismod))
+sqrt(var(fitted(poismod)))
+```
+
+#### Observations
+- Deviance: This explains the un-explained variance in our data. Lesser the deviance more good the model is. We have a less deviance of 1.64 suggesting good explainability of the variance.
+- Chisquare: It gives an idea of how much the fitted values differ from the expected values. Lesser the chisquare more dood the model is. We have a less chisquare of 0.897 suggesting good fitted values.
+- poisgof: The null hypothesis of this is a good goodness-of-fit measure for the poisson regression model. We have the p-value 0.897 > 0.05 significant value suggesting good fit of the model. 
+- Plots: We can see the normality of the residuals. 
+- drop1: We can see less AIC value for the predictor age*smoke suggesting it as good predictor.
+- Anova: We can see the Pr values are small for all the predictors. 
+- Assumption of the poission model is that mean and variance of the fitted values should be same. We can see they are approximately near suggesting a good model. 
 
 ## Document Information.
 
