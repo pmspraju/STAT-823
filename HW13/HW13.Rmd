@@ -3,13 +3,13 @@ title: "HW13 - Functions"
 author: "Madhu Peduri"
 date: "`r format(Sys.time(), '%B %e, %Y')`"
 output:
-  html_document:
-    df_print: paged
   pdf_document:
     citation_package: natbib
     fig_caption: yes
     highlight: tango
     number_sections: yes
+  html_document:
+    df_print: paged
 subparagraph: yes
 header-includes: \usepackage{hyperref} \usepackage{framed,xcolor} \definecolor{shadecolor}{rgb}{0.99,
   0.95, 0.9} \renewcommand\arraystretch{1.5} \usepackage[none]{hyphenat} \raggedright
@@ -68,6 +68,61 @@ f1(x)
 ### Problem 2
 
 ```{r}
+kurtosis <- function(x=NULL){
+  if(is.null(x)){
+    return("Null input")
+  }
+  n <- length(x)
+  mn <- mean(x)
+  num <- (1/n)*sum((x - mn)^4)
+  den <- ((1/n)*(sum((x - mn)^2)))^2
+  (num/den) - 3
+}
+kurtosis(c(1:10))
+```
+
+### Problem 3(a)
+
+```{r}
+perPay <- function(Pr,r,n){
+  Pr / (1 - ( 1 / (1+r)^n ) )
+}
+```
+
+### Problem 3(b)
+
+```{r}
+do.call(perPay, list(100000,0.01,300))
+```
+
+### Problem 4 (a)
+
+```{r}
+totamt <- function(p,n,r){
+  sapply(r,function(r1){p*( ((1 + r1)^n - 1) / r1)})
+}
+intr <- totamt(400,10,seq(0.1,0.2,0.01))
+intr
+```
+
+### Problem 4 (b)
+
+```{r}
+plot(seq(0.1,0.2,0.01), intr,xlab='Interest Rates',ylab='Interest Amounts')
+par(new = TRUE)
+plot(seq(0.1,0.2,0.01), intr,type = 'l',xlab='',ylab='')
+```
+
+### Problem 4 (c)
+
+```{r}
+totamt1 <- function(p,n,r){
+  intr <- sapply(r,function(r1){p*( ((1 + r1)^n - 1) / r1)})
+  plot(seq(0.1,0.2,0.01), intr,xlab='Interest Rates',ylab='Interest Amounts',col='blue')
+  par(new = TRUE)
+  plot(seq(0.1,0.2,0.01), intr,type = 'l',xlab='',ylab='')
+}
+totamt1(400,10,seq(0.1,0.2,0.01))
 ```
 
 ## Document Information.
