@@ -1,0 +1,186 @@
+---
+title: "HW14 - Debug"
+author: "Madhu Peduri"
+date: "`r format(Sys.time(), '%B %e, %Y')`"
+output:
+  pdf_document:
+    citation_package: natbib
+    fig_caption: yes
+    highlight: tango
+    number_sections: yes
+  html_document:
+    df_print: paged
+subparagraph: yes
+header-includes: \usepackage{hyperref} \usepackage{framed,xcolor} \definecolor{shadecolor}{rgb}{0.99,
+  0.95, 0.9} \renewcommand\arraystretch{1.5} \usepackage[none]{hyphenat} \raggedright
+  \usepackage{amsmath, amsthm, amssymb, bm}
+---
+
+  
+```{r setup, include=FALSE}
+library(knitr)
+knitr::opts_chunk$set(echo = TRUE)
+library(rmarkdown)
+library(graphics)
+library(ggplot2)
+library(MASS)
+library(Hmisc)
+library(epiDisplay)
+library(vcd)
+library(mnormt)
+library(MASS)
+library(car)
+library(ggpubr)
+library(PairedData)
+library(lmtest)
+library(xtable)
+library(faraway)
+library(leaps)
+library(psych)
+library(Matrix)
+library(dobson)
+library(jtools)
+library(Rcpp)
+options(digits = 3)
+opts_chunk$set(tidy.opts=list(width.cutoff=60), tidy=TRUE)
+```
+
+### Q1(a)
+
+```{r}
+calculate.exp <- function(my.number){
+exp.num <- (-my.number) ^ 2
+print(paste("Value of exp.num :",exp.num))
+result <- exp(exp.num)
+return(result)
+}
+```
+
+### Q1(b)
+
+```{r}
+calculate.exp(1)
+```
+
+### Q1(c)
+
+```{r}
+debugonce(calculate.exp)
+calculate.exp(1)
+```
+
+### Q1(d)
+- Debug: This method can be used to debug a function by setting a debugging flag. When a function flagged for debugging is entered, normal execution is suspended and the body of function is executed one statement at a time. A new browser context is initiated for each step. Once we flag a function using this, this remains for the entire session, that is, every call to this function launches the debug browser context.
+- Debugonce: This method is same as debug(), but it launches only for immediate next function call and further calls will be run in normal execution mode.
+
+### Q1(e)
+
+```{r}
+calculate.exp <- function(my.number){
+exp.num <- -(my.number) ^ 2
+browser()
+print(paste("Value of exp.num :",exp.num))
+result <- exp(exp.num)
+return(result)
+}
+calculate.exp(1)
+```
+
+### Q1(f)
+- Editor breakpoints: Another common way to stop on a line of code is to set a breakpoint on that line. We can do this in RStudio by clicking to the left of the line number in the editor, or by pressing Shift+F9 with your cursor on the desired line.
+- We call this an “editor breakpoint”. Editor breakpoints take effect immediately and don’t require you to change your code (unlike browser() breakpoints, below).
+
+### Q2
+
+```{r}
+my.simulation <- function(mu){
+# initiate an empty value
+mean.vec <- NA
+for (i in 1:100000){
+# Step 1
+simu.data <- rnorm(n = 10, mean = mu, sd = 1)
+# Step 2
+mean.simu <- mean(simu.data)
+# Step 3
+mean.vec <- c(mean.vec, mean.simu)
+}
+result <- mean(mean.vec)
+return(result)
+}
+# print the time it takes to execute the function
+system.time(print(my.simulation(10)))
+```
+
+### Q2 (a)
+
+```{r}
+my.simulation <- function(mu){
+# initiate an empty value
+mean.vec <- NA
+for (i in 1:10000){
+# Step 1
+simu.data <- rnorm(n = 10, mean = mu, sd = 1)
+# Step 2
+mean.simu <- mean(simu.data)
+# Step 3
+mean.vec <- c(mean.vec, mean.simu)
+}
+result <- mean(mean.vec)
+return(result)
+}
+# print the time it takes to execute the function
+system.time(print(my.simulation(10)))
+```
+
+### Q2 (b)
+
+```{r}
+my.simulation <- function(mu){
+# initiate an empty value
+mean.vec <- 0 ## Corrected statement
+for (i in 1:100){
+# Step 1
+simu.data <- rnorm(n = 10, mean = mu, sd = 1)
+# Step 2
+mean.simu <- mean(simu.data)
+# Step 3
+mean.vec <- c(mean.vec, mean.simu)
+}
+result <- mean(mean.vec)
+return(result)
+}
+# print the time it takes to execute the function
+system.time(print(my.simulation(10)))
+```
+
+### Q3 (a) 
+
+```{r}
+get.runs <- function(x, k){
+n <- length(x)
+runs <- NULL
+for (i in 1:(n-k)){
+  if(all(x[i:(i+k-1)] == TRUE)){
+    runs <- c(runs, i)
+    }
+  }
+return(runs)
+}
+```
+
+### Q3 (b)
+
+```{r}
+# this function below should return a vector
+# of (4,5,8) because there are a run of two TRUEs
+# in those indices.
+get.runs(c(TRUE, FALSE, FALSE, TRUE, TRUE, TRUE, FALSE, TRUE, TRUE), 2)
+```
+
+## Document Information.
+
+All of the statistical analyses in this document will be performed using `r R.version.string`.  R packages used will be maintained using the [packrat](http://rstudio.github.io/packrat/) dependency management system.  
+
+```{r session-info}
+sessionInfo()
+```

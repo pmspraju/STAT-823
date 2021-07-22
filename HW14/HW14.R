@@ -1,0 +1,30 @@
+library(graphics)
+library(ggplot2)
+library(MASS)
+library(Hmisc)
+library(epiDisplay)
+library(vcd)
+library(mnormt)
+library(MASS)
+library(car)
+library(ggpubr)
+library(PairedData)
+library(lmtest)
+library(xtable)
+library(faraway)
+library(leaps)
+library(psych)
+library(Matrix)
+library(dobson)
+library(jtools)
+library(Rcpp)
+
+calculate.exp <- function(my.number){
+  exp.num <- (-my.number) ^ 2
+  print(paste("Value of exp.num :",exp.num))
+  result <- exp(exp.num)
+  return(result)
+}
+
+debug(calculate.exp)
+calculate.exp(1)
