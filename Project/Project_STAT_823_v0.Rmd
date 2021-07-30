@@ -1,0 +1,338 @@
+---
+biblio-style: jabes
+bibliography: lazbibreg.bib
+documentclass: report
+fontsize: 12pt
+geometry: margin=1in
+header-includes: \usepackage{mdwlist} \usepackage[compact]{titlesec} \usepackage{titling}
+  \usepackage[font=small,labelfont=bf,tableposition=top]{caption} \usepackage{float}
+  \floatstyle{plaintop} \restylefloat{table} \usepackage{lastpage} \usepackage{hyperref}
+  \usepackage{colortbl} \usepackage{array} \hypersetup{backref,colorlinks=true} \usepackage{framed,color}
+  \definecolor{shadecolor}{rgb}{0.95, 0.92, 0.88} \usepackage{graphicx} \usepackage{booktabs}
+  \usepackage{fancyhdr} \usepackage[none]{hyphenat} \raggedright \usepackage{amsmath,
+  amsthm, amssymb, bm} \usepackage{marginnote} \usepackage{subfig} \def\mygraphcaption{Here
+  are my graphs.} \newlength{\mygraphwidth}\setlength{\mygraphwidth}{0.9\textwidth}
+  \usepackage{listings}
+output:
+  pdf_document:
+    citation_package: natbib
+    fig_caption: yes
+    highlight: tango
+  html_document:
+    df_print: paged
+subparagraph: yes
+---
+  \lstset{
+	basicstyle=\small\ttfamily,
+	columns=flexible,
+	breaklines=true}
+	
+  \pagestyle{fancy}
+  \fancyhead[L]{\textbf{Madhu}}
+  \fancyhead[C]{}
+  \fancyhead[R]{\textbf{STAT 823 Project}}
+  \fancyfoot[L]{}
+  \fancyfoot[C]{}
+  \fancyfoot[R]{Page -\thepage- of \pageref{LastPage}}
+  \fancypagestyle{plain}{\pagestyle{fancy}}
+  \renewcommand{\headrulewidth}{2pt}
+  \renewcommand{\footrulewidth}{2pt}
+ 
+ \hypersetup{
+	colorlinks   = true,
+	citecolor    = blue,
+	linkcolor    = black,
+	urlcolor     = blue
+  }
+  
+  \begin{titlepage}
+   \begin{center}
+       \vspace*{2cm}
+        
+       \vspace{0.5cm}
+ 
+       \textbf{\textit{\LARGE Regression Models for counts}}
+       
+       \textbf{\textit{\LARGE - Websites Delivered Dataset}}
+ 
+       \vspace{0.5cm}
+      
+       \textbf{\Large STAT 823: Summer Class Project, 2021} 
+       
+        \vspace{0.5cm}
+        
+        \textbf{\large Madhu Peduri}
+        
+       \vfill
+ 
+       \vspace{0.7cm}
+ 
+       \includegraphics[width=0.4\textwidth]{figures/ku}
+ 
+       \large Department of Biostatistics and Data Science \\
+       University of Kansas, USA \\
+       `r format(Sys.time(), '%B %e, %Y')`
+ 
+   \end{center}
+\end{titlepage}
+  
+```{r setup, include=FALSE}
+# load packages
+library(knitr)
+library(formatR)
+library(stargazer)
+library(xtable)
+knitr::opts_chunk$set(echo = TRUE)
+options(digits = 5, width = 60, xtable.comment = FALSE)
+opts_chunk$set(tidy.opts = list(width.cutoff=60), tidy=TRUE)
+out_type <- knitr::opts_knit$get("rmarkdown.pandoc.to")
+```
+
+\setlength{\headheight}{45pt}
+ 
+\thispagestyle{empty}
+\newpage
+\pagenumbering{roman}
+\setcounter{page}{1}
+\pagestyle{plain}
+\tableofcontents
+\cleardoublepage
+\phantomsection
+\listoftables
+\phantomsection
+\listoffigures
+\newpage
+\pagenumbering{arabic}
+
+\section{Abstract}
+Modeling count variables is a commont task in Statistical regression. Due to its assumption with Normality, classical linear regression model is limited in dealing with such data. Poisson regression model perform better on response variables that are discrete and are limited to non-negative values such as counted number of occurrences of an event. In this report, we attempt to analyze one such variable that represent the number of websites delivered by the management of a company. We explored the dataset from different view points and transformed when necessary. We used possion regression, on the given dataset, as the base model and created multiple models that are better with transformed data and without outliers. 
+
+Overdispersion is a common problem in poisson regression, we used quasi-poisson and Negative binomial models to handle this. We conclude by discussing different metrics to determine the good model and its impactful features.    
+
+\newpage
+
+\section{Introduction}
+  Statistical Regression is the concept to determine how a variable of interest, or a dependent variable, is affected by one or more independent variables. It will provide us with an equation that can be used to make predictions for the desired data. While Linear Regression is a good tool for prediction analysis, it relies on the following four assumptions,
+
+\textbf{Linearity:} Linear Regression assumes that the relation between Dependent and independent variables is linear. 
+
+\textbf{Homoscedasticity:} According to this assumption, different samples have the same variance, even if they came from different populations. Variance of the residuals will be constant even with a change in the independent variables.
+
+\textbf{Collinearity:} According to this assumption, Observations are non-colinear or independent to each other. 
+
+\textbf{Normality:} This states that, the residuals between the actual and predicted values of the dependent variable follow normal distribution. 
+
+  We know that Normality is an assumption for linear regression, often, the response variable of interest is categorical or discrete, not continuous. In this case, a linear regression cannot produce normally distributed errors. An alternative is to use a Poisson regression model or one of its variants. These models have a number of advantages over an ordinary linear regression model, including a skew, discrete distribution, and the restriction of predicted values to non-negative numbers. A Poisson model is similar to an ordinary linear regression, with following three assumptions,
+  
+\textbf{Poisson distribution:} Model assumes that the response variable follow a Poisson, instead of a normal, distribution. 
+
+$P(y) = \dfrac{\mu e^{-\mu}}{y!} \quad y=0,1,\dots$ 
+
+\textbf{Log function:} Models the natural log of the response variable, ln(Y), as a linear function of the coefficients.
+
+$log(y) = \beta_{0} + \beta_{1}X_{1} + \dots + \beta_{p}X_{p}$
+
+\textbf{E(Y)=Var(Y):} This is another aspect of the first assumption, A characteristic of the Poisson distribution is that its mean is equal to its variance. In certain circumstances, it will be found that the observed variance is greater than the mean; this is known as overdispersion and indicates that the model is not appropriate. 
+
+\newpage
+
+\subsection{Primary Analysis Objectives}
+
+Perform Poisson regression model on the 'Website delivered dataset'. Validate the model assumption and look for any overdispersion. Apply Quasi-poisson and Negative binomial regression models in case of any overdispersion. Validate different metrics applicable and determine the good model and its impactful features. 
+
+\section{Materials and Methods}
+\subsection{Data Sources}
+The dataset was obtained from the Management company that develops websites and was interested in determining which variables have the greatest impact on the number of websites developed and delivered to customers per quarter. Data were collected on website production output for 13 three-person website development teams, from January 2001 through August 2002. Each line of the dataset has 7 variables and one response variable. Below is the description of each variable,
+
+```{r tab1,  echo=FALSE, results="asis", message=FALSE,  tidy.opts = list(width.cutoff=30)}
+v1 <- c('idnum: Identification number','delivered: Websites delivered','backlog: Backlog of orders','teamnum: Team number','experience: Team experience','change: Process change','year: Year','quarter: Quarter')
+v2 <- c('Cardinal','Discrete (Response Variable)','Continous','Cardinal','Continous','Categorical','Categorical-nominal','Categorical-nominal')
+td <- data.frame(cbind(v1,v2))
+names(td) <- c('Variable Name','Type')
+row.names(td) <- NULL
+xtable(td,label = 'tab:tab1',caption = 'Dataset Features and Types')
+```
+
+We can determine that, our response variable, Websites delivered, is a discrete count variable which makes it suitable for poisson regression. Out of 7 features, we have 2 cardinal, 2 Continous and 3 Categorical of type. All the categoical variables are of nominal type, that is, there is no scaling factor among different categories. 
+
+\subsection{Statistical Analysis}
+\subsubsection{Exploratory Data Analysis}
+
+\textbf{Understanding Variables:}
+We plot the distributions of our variables to gain insight into each of them. For Continous variables, we use r-plots and for categorical, we use barplots.
+
+```{r echo=FALSE, results="asis", message=FALSE,  tidy.opts = list(width.cutoff=30)}
+wd <- read.csv("Data\\website.csv")
+```
+
+```{r figure1, echo=FALSE, include=TRUE, message=FALSE, fig.cap="Continous Variables.", fig.pos="H", fig.align='center', out.width="0.6\\linewidth"}
+par(mfrow = c(1, 3))
+plot(wd$backlog,ylab='Backlog')
+plot(wd$experience,ylab='Experience')
+plot(wd$backlog~wd$experience,xlab='Experience',ylab='Backlog')
+```
+
+From Figure \ref{fig:figure1}, we observe that both continous variables Backlog, Experience have non-constant variance. Data is scattered across the plot suggesting no outliers. Some linearity exists between two variables. 
+
+```{r figure2, echo=FALSE, include=TRUE, message=FALSE, fig.cap="Categorical Variables.", fig.pos="H", fig.align='center', out.width="0.8\\linewidth"}
+par(mfrow = c(1, 4))
+barplot(table(wd$change),xlab='Change')
+barplot(table(wd$year),xlab='Year')
+barplot(table(wd$quarter),xlab='Quarter')
+counts <- table(wd$year,wd$change)
+barplot(counts,col=c('gray48','gray100'),legend = rownames(counts),xlab='Change',ylab='Year')
+```
+
+From Figure \ref{fig:figure2}, we observe no significant imbalance between different categories of Year or Quarter and little imbalance in Change variable. Using this plot, we know the categories involved, which can be used to encode them if necessary. As we know our categorical variables are nominal, we can use one-hot encoding. 
+
+```{r figure3, echo=FALSE, include=TRUE, message=FALSE, fig.cap="Response Variable.", fig.pos="H", fig.align='center', out.width="0.6\\linewidth"}
+par(mfrow = c(1, 2))
+plot(wd$delivered, xlab='Index', ylab='Websites Delivered',main='Scatter plot')
+abline(h=c(sqrt(mean(wd$delivered)),sd(wd$delivered)),col=c('blue','red'))
+text(69,9.0,'Std Dev',cex=0.6,col='red')
+text(66,4.0,'Sqrt(mean)',cex=0.6,col='blue')
+barplot(table(wd$delivered), xlab='Websites Delivered', ylab='Frequency',main='Counts plot')
+```
+
+From Figure \ref{fig:figure3}, we can see a possion distribution (for a given expected average) in the counts plot. From the scatter plot, it can be determined that our response variable has non-constant variance and its $\sqrt{mean}$(~mean) is not equal to its standard deviation(~variance). This difference suggests the presence of overdispersion.
+
+```{r figure4, echo=FALSE, include=TRUE, message=FALSE, fig.cap="Relation between Categorical and Response Variable.", fig.pos="H", fig.align='center', out.width="0.8\\linewidth"}
+par(mfrow = c(1, 4))
+counts <- table(wd$change,wd$delivered)
+barplot(counts,col=c('gray48','gray100'),legend = rownames(counts),xlab='delivered',ylab='change')
+
+counts <- table(wd$year,wd$delivered)
+barplot(counts,col=c('gray48','gray100'),legend = rownames(counts),xlab='delivered',ylab='year')
+
+wd2001 <- wd[wd$year == '2001',]
+counts <- table(wd2001$quarter,wd2001$delivered)
+barplot(counts,col=c('gray8','gray30','gray66','gray100'),legend = rownames(counts),xlab='delivered',ylab='quaerter-2001')
+
+wd2002 <- wd[wd$year == '2002',]
+counts <- table(wd2002$quarter,wd2002$delivered)
+barplot(counts,col=c('gray8','gray30','gray66','gray100'),legend = rownames(counts),xlab='delivered',ylab='quaerter-2002')
+```
+
+From Figure \ref{fig:figure4}, We can establish the relation between different categorical variables and the response variable. We plotted the distribution of the response variable 'delivered' highlighting the contriubution of each category for a given categorical variable.
+
+\textbf{Change:} We can see approximately equal contribution from both categories, 0 and 1, towards the response variable.
+
+\textbf{Year:} We have two categories 2001 and 2002 which contribute equally toward the response variable.
+
+\textbf{Quarter:} Each year 2001 and 2002 have been divided across 4 quaters. We plotted the contribution of each quater per year towards the response variable. For year 2001, we have websites delivered in all quarters and for 2002, we do not have any websites delivered in quarter 4. But we believe imbalance created by this will not be significant. 
+
+From above observations, we can determine that, all categories are nominal without any sacling among themselves and contributed towards the response variable. This would suggest the division of categories in to individual features can contribute to model better than combined features. 
+
+\subsubsection{Model Assumptions}
+
+All inferences are conducted using $\alpha = 0.05$ unless stated otherwise.  No adjustments for multiplicity are made as this is an exploratory analysis. Discrete variables are summarized with proportions and frequencies.  Continuous variables are summarized using the following statistics:
+
+\subsubsection{Primary Objective Analysis}
+
+The primary objective analysis uses a Wilcoxon signed rank test to determine if there is a significant difference between cPRA scores at baseline and at week 16.  
+
+\subsubsection{Secondary Objective Analyses}
+
+Summary statistics are produced for baseline characteristics.  
+
+\subsubsection{Goodness of Fit Test}
+
+Describe here what goodness of fit statistics were used or will be used.
+
+All of the statistical analyses in this document will be performed using `r R.version.string` [R](https://www.r-project.org/) \citep{r2018}.
+R packages used will be maintained using the [packrat](http://rstudio.github.io/packrat/) dependency management system. 
+
+\section{Results}
+
+Describe your results here. Add subheadings if necessary.
+
+\subsection{Add appropriate Figures}
+
+Figure \ref{fig:figure16} produced within an R chunk:
+
+```{r figure16, echo=FALSE, include=TRUE, message=FALSE, fig.cap="The mean $\\mu$ (dashed line) is greater than the median  $\\tilde{\\mu}$ (dotted line) of a positively  skewed distribution.", fig.pos="H", fig.align='center', out.width="0.6\\linewidth"}
+par(font.axis = 2)
+x <- seq(0, 20, 0.01)
+plot(x, dchisq(x, 6), type = "l", ylab = "f(x)", main = "")
+lines(c(6,6),c(0,dchisq(6, 6)),lty=2)
+m <- 6*(1-2/(9*6))^3
+lines(c(m,m),c(0,dchisq(m, 6)),lty=3)
+```
+
+ 
+You can produce figures in R and plot them side by side. One way is as shown in Figure \ref{fig:figs1314}.
+
+```{r figs1314,  echo=FALSE, message=FALSE,  include=TRUE, fig.cap="Distributions of an Exponential rv.", fig.pos="H", fig.align='center', out.width="0.99\\linewidth"}
+par(mfrow=c(1,2),font.axis = 2)
+x <- seq(0, 40, 0.01)
+plot(x, dexp(x, 1/15), type = "l", ylab = "f(x)", lwd = 2, main = "",sub = expression(paste(" (a) Exponential pdf with ",lambda == 1/15)))
+lines(c(5,5),c(0,dexp(5,1/15)),lty=2)
+lines(c(10,10),c(0,dexp(10,1/15)),lty=2)
+x <- seq(0, 40, 0.01)
+plot(x, pexp(x, 1/15), type = "l", ylab = "F(x)", lwd = 2,main = "",sub = expression(paste("(b) Exponential cdf with ",lambda == 1/15)))
+lines(c(5,5),c(0,pexp(5,1/15)),lty=2)
+lines(c(10,10),c(0,pexp(10,1/15)),lty=2)
+```
+
+
+\subsection{Add Tables from the descriptive and inferential statistics}
+
+There are different ways:
+Here is Table \ref{tab:tab3} with a long title.
+
+```{r, message=FALSE, echo=FALSE,}
+data(tli)
+fm1sc <- aov(tlimth ~ sex + ethnicty + grade, data = tli)
+```
+
+```{r tab3,  echo=FALSE, results="asis", message=FALSE,  tidy.opts = list(width.cutoff=30)}
+xtable(fm1sc, label="tab:tab3", 
+       caption = c("ANOVA Model with Predictors Sex, Ethnicity, and Grade", "ANOVA: Sex, Ethnicity, Grade"))
+```
+
+
+```{r tab5,  echo=FALSE, results="asis", message=FALSE}
+mod1 <- lm(tlimth ~ sex + ethnicty + grade, data = tli)
+kable(anova(mod1),
+      caption = "ANOVA for full model",
+      digits = 3)
+```
+
+
+```{r tab7,  echo=FALSE, results="asis", message=FALSE}
+xtable(summary(mod1)$coef, caption = "Results Using Xtable")
+```
+
+
+\section{Discussion and Conclusion}
+
+Here, you should provide a narrative describing the findings and their interpretation (in layman's terms). Discuss any limitations of your findings that may be attributed to the study design, data collection, or analysis.
+
+\newpage
+
+\section{Appendix: R-code}
+
+This area is where you can include the code that was used to do the analysis.
+
+\begin{lstlisting}
+rm(list = ls(all=TRUE))
+
+graphics.off()
+par(font.axis = 2)
+par(mar=c(4, 5, 1, 4) + 0.1)
+x <- c(0,1)
+plot(x, dbinom(x, 1, 0.5), type = "h", 
+ylab = "P(x)", ylim = c(0,1), xlab="",
+lwd = 18, col = "orange", main = "", axes = F)
+axis(1, at = c(0,1), labels = c("Tails","Heads"))
+axis(2,c(0.0,0.2,0.4,0.6,0.8,1.0))
+dev.print(pdf,"~/figures/Figure4.pdf")
+
+graphics.off()
+par(font.axis = 2)
+par(mar=c(4, 5, 1, 4) + 0.1)
+x <- seq(0, 10, 1)
+plot(x, dbinom(x, 10, 0.5), type = "h", ylab = "f(x)", lwd = 8,
+col = "dark gray", ylim = c(0,0.5), main = "")
+dev.print(pdf,"~/figures/Figure9.pdf")
+\end{lstlisting}

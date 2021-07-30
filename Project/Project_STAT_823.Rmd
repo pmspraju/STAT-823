@@ -1,0 +1,775 @@
+---
+biblio-style: jabes
+bibliography: lazbibreg.bib
+documentclass: report
+fontsize: 12pt
+geometry: margin=1in
+header-includes: \usepackage{mdwlist} \usepackage[compact]{titlesec} \usepackage{titling}
+  \usepackage[font=small,labelfont=bf,tableposition=top]{caption} \usepackage{float}
+  \floatstyle{plaintop} \restylefloat{table} \usepackage{lastpage} \usepackage{hyperref}
+  \usepackage{colortbl} \usepackage{array} \hypersetup{backref,colorlinks=true} \usepackage{framed,color}
+  \definecolor{shadecolor}{rgb}{0.95, 0.92, 0.88} \usepackage{graphicx} \usepackage{booktabs}
+  \usepackage{fancyhdr} \usepackage[none]{hyphenat} \raggedright \usepackage{amsmath,
+  amsthm, amssymb, bm} \usepackage{marginnote} \usepackage{subfig} \def\mygraphcaption{Here
+  are my graphs.} \newlength{\mygraphwidth}\setlength{\mygraphwidth}{0.9\textwidth}
+  \usepackage{listings}
+output:
+  pdf_document:
+    citation_package: natbib
+    fig_caption: yes
+    highlight: tango
+  html_document:
+    df_print: paged
+subparagraph: yes
+---
+  \lstset{
+	basicstyle=\small\ttfamily,
+	columns=flexible,
+	breaklines=true}
+	
+  \pagestyle{fancy}
+  \fancyhead[L]{\textbf{Regression for Counts}}
+  \fancyhead[C]{}
+  \fancyhead[R]{\textbf{STAT 823 Project}}
+  \fancyfoot[L]{}
+  \fancyfoot[C]{}
+  \fancyfoot[R]{Page -\thepage- of \pageref{LastPage}}
+  \fancypagestyle{plain}{\pagestyle{fancy}}
+  \renewcommand{\headrulewidth}{2pt}
+  \renewcommand{\footrulewidth}{2pt}
+ 
+ \hypersetup{
+	colorlinks   = true,
+	citecolor    = blue,
+	linkcolor    = black,
+	urlcolor     = blue
+  }
+  
+  \begin{titlepage}
+   \begin{center}
+       \vspace*{2cm}
+        
+       \vspace{0.5cm}
+ 
+       \textbf{\textit{\LARGE Variables with the Greatest Impact on}}
+       
+       \textbf{\textit{\LARGE Website Development using Count Regression}}
+ 
+       \vspace{0.5cm}
+      
+       \textbf{\Large STAT 823: Summer Class Project, 2021} 
+       
+        \vspace{0.5cm}
+        
+        \textbf{\large Madhu Peduri}
+        
+        \textbf{\large Mary Duncan}
+        
+       \vfill
+ 
+       \vspace{0.7cm}
+ 
+       \includegraphics[width=0.4\textwidth]{figures/ku}
+ 
+       \large Department of Biostatistics and Data Science \\
+       University of Kansas, USA \\
+       `r format(Sys.time(), '%B %e, %Y')`
+ 
+   \end{center}
+\end{titlepage}
+  
+```{r setup, include=FALSE}
+# load packages
+library(knitr)
+library(formatR)
+library(stargazer)
+library(xtable)
+# packages
+library(graphics)
+library(ggplot2)
+library(MASS)
+library(Hmisc)
+library(epiDisplay)
+library(vcd)
+library(mnormt)
+library(MASS)
+library(car)
+library(ggpubr)
+library(PairedData)
+library(lmtest)
+library(faraway)
+library(leaps)
+library(psych)
+library(Matrix)
+library(dobson)
+library(jtools)
+library(Rcpp)
+library(pscl)
+library(effects)
+knitr::opts_chunk$set(echo = TRUE)
+options(digits = 5, width = 60, xtable.comment = FALSE)
+opts_chunk$set(tidy.opts = list(width.cutoff=60), tidy=TRUE)
+out_type <- knitr::opts_knit$get("rmarkdown.pandoc.to")
+```
+
+\setlength{\headheight}{45pt}
+ 
+\thispagestyle{empty}
+\newpage
+\pagenumbering{roman}
+\setcounter{page}{1}
+\pagestyle{plain}
+\tableofcontents
+\cleardoublepage
+\phantomsection
+\listoftables
+\phantomsection
+\listoffigures
+\newpage
+\pagenumbering{arabic}
+
+\section{Abstract}
+Modeling count variables is a common task in statistical regression. Due to its assumption of Normality, classical linear regression is a more limited model in dealing with such data. The Poisson regression model performs better with response variables that are discrete and are limited to non-negative values such as the counted number of occurrences of an event. In this report, we attempt to analyze one such outcome that represents the number of websites delivered by the management of a company. We explored the dataset with respect to each covariate and made transformations when necessary. We used a Poisson regression on the given dataset as the base model and created multiple more accurate models that better represent the data by transforming data and removing outliers. 
+
+Overdispersion is a common problem in a Poisson regression. In order to mediate this, we used both a Quasi-poisson and a Negative binomial model. We conclude by discussing different metrics to determine the best fitting model and which covariates most impact the number of websites delivered.    
+
+\newpage
+
+\section{Introduction}
+  Statistical Regression is the concept used to determine how a variable of interest, or a dependent variable, is affected by one or more independent variables. The outcome is an equation that can be used to make predictions based on data collected. While Linear Regression is a good tool for prediction analysis, it relies on the following four assumptions:
+
+\textbf{Linearity:} Linear Regression assumes that the relation between dependent and independent variables is linear. 
+
+\textbf{Homoscedasticity:} According to this assumption, different samples have the same variance, even if they came from different populations. Variance of the residuals will be constant even with a change in the independent variables.
+
+\textbf{Collinearity:} According to this assumption, observations are non-collinear or independent to each other. 
+
+\textbf{Normality:} This states that, the residuals between the actual and predicted values of the dependent variable follow normal distribution. 
+
+  Normality is an understood assumption for linear regression. Often, the response variable of interest is categorical or discrete, not continuous. In this case, a linear regression model cannot produce normally distributed errors. An alternative is to use a Poisson regression model or one of its variants. These models have a number of advantages over an ordinary linear regression model, including a skew, discrete distribution, and the restriction of predicted values to non-negative numbers. A Poisson model is similar to an ordinary linear regression, with the following three assumptions:
+  
+\textbf{Poisson distribution:} Model assumes that the response variable follows a Poisson distribution, instead of a normal distribution. 
+
+$P(y) = \dfrac{\mu e^{-\mu}}{y!} \quad y=0,1,\dots$ 
+
+\textbf{Log function:} Models the natural log of the response variable, ln(Y), as a linear function of the coefficients.
+
+$log(y) = \beta_{0} + \beta_{1}X_{1} + \dots + \beta_{p}X_{p}$
+
+\textbf{E(Y)=Var(Y):} This is another aspect of the first assumption. A characteristic of the Poisson distribution is that its mean is equal to its variance. In certain circumstances, it will be found that the observed variance is greater than the mean; this is known as overdispersion and indicates that the model is not appropriate. 
+
+  The objective of this paper is to study the association between the backlog, team number, team experience, and process, with the number of websites delivered to customers per quarter and to determine which covariables most impact this outcome. This poses an opportunity to increase this outcome by optimizing and/or maximizing the most influential covariates, which in turn, may increase company productivity.
+
+\newpage
+
+\subsection{Primary Analysis Objectives}
+
+The primary analysis objective of this report is to perform a Poisson regression model on the 'Website delivered dataset'. Additionally, we will validate the model assumptions and look for any overdispersion. In the case of overdispersion, we will apply a Quasi-poisson and a Negative binomial regression model. Validate different metrics applicable and determine the model equation that best fits the data. In other words, determine which covariates most impact the outcome of the number of websites delivered to customers per quarter.
+
+\section{Materials and Methods}
+\subsection{Data Sources}
+The dataset was obtained from the Management company that develops websites and was interested in determining which variables have the greatest impact on the number of websites developed and delivered to customers per quarter. Data were collected on website production output for 13 three-person website development teams, from January 2001 through August 2002. Each line of the dataset has 7 variables and one response variable. Below is the description of each variable,
+
+```{r tab1,  echo=FALSE, results="asis", message=FALSE,  tidy.opts = list(width.cutoff=30)}
+v1 <- c('idnum: Identification number','delivered: Websites delivered','backlog: Backlog of orders','teamnum: Team number','experience: Team experience','change: Process change','year: Year','quarter: Quarter')
+v2 <- c('Cardinal','Discrete (Response Variable)','Continous','Cardinal','Continous','Categorical','Categorical-nominal','Categorical-nominal')
+td <- data.frame(cbind(v1,v2))
+names(td) <- c('Variable Name','Type')
+row.names(td) <- NULL
+xtable(td,label = 'tab:tab1',caption = 'Dataset Features and Types')
+```
+
+We can determine that, our response variable, Websites delivered, is a discrete count variable which makes it suitable for poisson regression. Out of 7 features, we have 2 cardinal, 2 Continous and 3 Categorical of type. All the categorical variables are of nominal type, that is, there is no scaling factor among different categories. 
+
+\subsection{Statistical Analysis}
+\subsubsection{Exploratory Data Analysis}
+
+\textbf{Understanding Variables:}
+We plot the distributions of our variables to gain insight into each of them. For Continuous variables, we use r-plots and for categorical, we use barplots.
+
+```{r echo=FALSE, results="asis", message=FALSE,  tidy.opts = list(width.cutoff=30)}
+wd <- read.csv("Data\\website.csv")
+```
+
+```{r figure1, echo=FALSE, include=TRUE, message=FALSE, fig.cap="Continous Variables.", fig.pos="H", fig.align='center', out.width="0.6\\linewidth"}
+par(mfrow = c(1, 3))
+plot(wd$backlog,ylab='Backlog')
+plot(wd$experience,ylab='Experience')
+plot(wd$backlog~wd$experience,xlab='Experience',ylab='Backlog')
+```
+
+From Figure \ref{fig:figure1}, it can be observed that both continuous variables Backlog and Experience have non-constant variance. Data is scattered across the plot suggesting no outliers. Some linearity exists between two variables. 
+
+```{r figure2, echo=FALSE, include=TRUE, message=FALSE, fig.cap="Categorical Variables.", fig.pos="H", fig.align='center', out.width="0.8\\linewidth"}
+par(mfrow = c(1, 4))
+barplot(table(wd$change),xlab='Change')
+barplot(table(wd$year),xlab='Year')
+barplot(table(wd$quarter),xlab='Quarter')
+counts <- table(wd$year,wd$change)
+barplot(counts,col=c('gray48','gray100'),legend = rownames(counts),xlab='Change',ylab='Year')
+```
+
+From Figure \ref{fig:figure2}, we observe no significant imbalance between different categories of Year or Quarter and little imbalance in the Change variable. Using this plot, we know the categories involved, which can be used to encode them if necessary. As we know our categorical variables are nominal, we can use one-hot encoding. 
+
+```{r figure3, echo=FALSE, include=TRUE, message=FALSE, fig.cap="Response Variable.", fig.pos="H", fig.align='center', out.width="0.6\\linewidth"}
+par(mfrow = c(1, 2))
+plot(wd$delivered, xlab='Index', ylab='Websites Delivered',main='Scatter plot')
+abline(h=c(sqrt(mean(wd$delivered)),sd(wd$delivered)),col=c('blue','red'))
+text(69,9.0,'Std Dev',cex=0.6,col='red')
+text(66,4.0,'Sqrt(mean)',cex=0.6,col='blue')
+barplot(table(wd$delivered), xlab='Websites Delivered', ylab='Frequency',main='Counts plot')
+```
+
+From Figure \ref{fig:figure3}, we can see a poisson distribution (for a given expected average) in the counts plot. From the scatter plot, it can be determined that our response variable has non-constant variance and its $\sqrt{mean}=3.007$(~mean) is not equal to its standard deviation(~variance)=7.084. This difference suggests the presence of overdispersion.
+
+```{r figure4, echo=FALSE, include=TRUE, message=FALSE, fig.cap="Relation between Categorical and Response Variable.", fig.pos="H", fig.align='center', out.width="0.8\\linewidth"}
+par(mfrow = c(1, 4))
+counts <- table(wd$change,wd$delivered)
+barplot(counts,col=c('gray48','gray100'),legend = rownames(counts),xlab='delivered',ylab='change')
+
+counts <- table(wd$year,wd$delivered)
+barplot(counts,col=c('gray48','gray100'),legend = rownames(counts),xlab='delivered',ylab='year')
+
+wd2001 <- wd[wd$year == '2001',]
+counts <- table(wd2001$quarter,wd2001$delivered)
+barplot(counts,col=c('gray8','gray30','gray66','gray100'),legend = rownames(counts),xlab='delivered',ylab='quaerter-2001')
+
+wd2002 <- wd[wd$year == '2002',]
+counts <- table(wd2002$quarter,wd2002$delivered)
+barplot(counts,col=c('gray8','gray30','gray66','gray100'),legend = rownames(counts),xlab='delivered',ylab='quaerter-2002')
+```
+
+From Figure \ref{fig:figure4}, We can establish the relation between different categorical variables and the response variable. We plotted the distribution of the response variable 'delivered' highlighting the contriubution of each category for a given categorical variable.
+
+\textbf{Change:} We can see approximately equal contribution from both categories, 0 and 1, towards the response variable.
+
+\textbf{Year:} We have two categories 2001 and 2002 which contribute equally toward the response variable.
+
+\textbf{Quarter:} Each year 2001 and 2002 have been divided across 4 quaters. We plotted the contribution of each quater per year towards the response variable. For year 2001, we have websites delivered in all quarters and for 2002, we do not have any websites delivered in quarter 4. But we believe imbalance created by this will not be significant. 
+
+From above observations, we can determine that, all categories are nominal without any sacling among themselves and contributed towards the response variable. This would suggest the division of categories in to individual features can contribute to model better than combined features. 
+
+```{r tab2,  echo=FALSE, results="asis", message=FALSE,  tidy.opts = list(width.cutoff=30)}
+wdfm <- as.data.frame(sapply(wd,function(x) cbind(summary(x))))
+row.names(wdfm) <- c('Min','1st Qu','Median','Mean','3rd Qu','Max')
+xtable(wdfm,label = 'tab:tab2',caption = 'Dataset summary')
+```
+
+The observations from the plots can be identified from the summary of  the dataset as well. We do not see significant differences between mean and media of continous variables suggesting no outliers. No significant skewness among the features. 
+
+\textbf{Data Transformation:} We perform below changes to the given dataset according to the observations made from data analysis.
+
+- We have two cardinal variables which acts as indexes. We believe these features do not contriubte to the model.
+- We have three categorical variables, Change, Year and quarter. We encode them such that each category will be fabricated as a separate feature. For example, Variable 'Change' has 0 and 1 as categories. We fabricate two features 'Change_0', which will have 1 where 'Change=0' and 'Change_1', which will have 1, where 'Change=1'.
+- We observed some skewness (not significant) in the continous variables background and experience. We will try using log transformation while building the model.
+
+```{r tab3,  echo=FALSE, results="asis", message=FALSE,  tidy.opts = list(width.cutoff=30)}
+
+# Data transformation
+names(wd)[1] = "id"
+
+wdf <- data.frame(
+  delivered = as.numeric(wd$delivered),
+  backlog = as.numeric(wd$backlog),
+  teamnum = as.numeric(wd$teamnum),
+  experience = as.numeric(wd$experience),
+  change_0 = as.numeric(wd$change),
+  change_1 = as.numeric(wd$change),
+  year_01 = as.numeric(wd$year),
+  year_02 = as.numeric(wd$year),
+  quarter_1 = as.numeric(wd$quarter),
+  quarter_2 = as.numeric(wd$quarter),
+  quarter_3 = as.numeric(wd$quarter),
+  quarter_4 = as.numeric(wd$quarter)
+)
+
+wdf$change_0[wdf$change_0 == 0] <- 1
+wdf$change_0[wdf$change_0 == 1] <- 0
+wdf$change_1[wdf$change_1 == 0] <- 0
+wdf$change_1[wdf$change_1 == 1] <- 1
+
+wdf$year_01[wdf$year_01 == 2001] <- 1
+wdf$year_01[wdf$year_01 == 2002] <- 0
+wdf$year_02[wdf$year_02 == 2001] <- 0
+wdf$year_02[wdf$year_02 == 2002] <- 1
+ 
+wdf$quarter_1[wdf$quarter_1 != 1] <- 0
+wdf$quarter_1[wdf$quarter_1 == 1] <- 1
+wdf$quarter_2[wdf$quarter_2 != 2] <- 0
+wdf$quarter_2[wdf$quarter_2 == 2] <- 1
+wdf$quarter_3[wdf$quarter_3 != 3] <- 0
+wdf$quarter_3[wdf$quarter_3 == 3] <- 1
+wdf$quarter_4[wdf$quarter_4 != 4] <- 0
+wdf$quarter_4[wdf$quarter_4 == 4] <- 1
+
+newcol <- matrix(names(wdf), nrow = 3, byrow = TRUE)
+xtable(newcol,label = 'tab:tab3',caption = 'Features after transformation')
+```
+
+\subsubsection{Model Assumptions}
+
+Below statistical parameters are used to determine a good model:
+
+\textbf{Deviance:} This measures the unexplained variance by the model. Low deviance is good.
+
+\textbf{Chisquare:} This measures how much the fitted values differ from the expected values. Lesser the chisquare more good the model is.
+
+\textbf{R-squared:} This measures the percentage of variance, of the response variable, measured by using the independent features collectively. Higher R-squared is preferred.
+
+\textbf{AIC and BIC:} These are probabilistic model selection parameters. These represent how bad a moder performed on the training dataset and its complexity. Model with low values are preferred. 
+
+\subsubsection{Primary Objective Analysis}
+
+\subsubsection{Univariate Analysis:}
+
+First we perform univariate analysis and determine if any feature has enough relation to explain the variance of the response variable. 
+
+```{r echo=FALSE, results="asis", message=FALSE,  tidy.opts = list(width.cutoff=30)}
+modelstat <- function(mod,dtf){
+  # Summaries
+  mods1 <- summary(mod)
+  mods2 <- summ(mod, confint = TRUE, digits = 3, ci.width = 0.95)
+  
+  # Attributes
+  mods2atr <- attributes(mods2)
+  
+  # Goodness of fit
+  devresd <- round(residuals(mod, type = "deviance"), 3)
+  devgof <- sum(devresd^2)
+  
+  pearson.resid <- round(resid(mod, type = "pearson"), 3)
+  prsgof <- sum(pearson.resid^2)
+  
+  # Residual plots 
+  stddevres <- rstandard(mod)
+  stdpearsons <- rstandard(mod, type = "pearson")
+  
+  #poisson gof
+  chiq <- pchisq(deviance(mod), df.residual(mod), lower = F)
+  
+  c(mods1$deviance,mods1$df.residual,chiq,mods2atr$rsqmc,mods2atr$aic,mods2atr$bic,devgof,prsgof)
+}
+modelplot <- function(mod){
+  # plots
+  par(mfrow = c(1, 2))
+  plot(mod, which = c(1), main = "", caption = "")
+  ip <- influencePlot(mod)
+}
+modelsumm <- function(mod,lb,cp){
+  # stat
+  xtable(cbind( na.omit(summary(mod)$coef) ,RR= na.omit(coef(mod)), na.omit(confint(mod)) ),label = lb, caption = cp)
+}
+```
+
+\textbf{Using Backlog feature:} From Figure \ref{fig:figure5}, we can observe that regression model's fit is good from Table \ref{tab:tab4}, we can observe the standard error is low for the feature.
+
+```{r tab4,  echo=FALSE, results="asis", message=FALSE,  tidy.opts = list(width.cutoff=30)}
+glm1 <- glm(delivered ~ backlog, family = poisson(link = "log"),data = wdf)
+glm1stat <- modelstat(glm1,wdf)
+instatdf <- data.frame(rbind(glm1stat))
+rownames(instatdf)[1] <- 'Backlog'
+names(instatdf) <- c('Deviance','Dof','Chisq','R2','AIC','BIC','Gof-Dev','Gof-Pearson')
+modelsumm(glm1,'tab:tab4',"Model summary with Backlog feature")
+```
+
+```{r figure5, echo=FALSE, include=TRUE, message=FALSE, fig.cap="Regression plots using backlog feature.", fig.pos="H", fig.align='center', out.width="0.6\\linewidth"}
+modelplot(glm1)
+```
+
+\textbf{Using Experience feature:} From Figure \ref{fig:figure6}, we can observe that regression model's fit is good from Table \ref{tab:tab5}, we can observe the standard error is low for the feature.
+
+```{r tab5,  echo=FALSE, results="asis", message=FALSE,  tidy.opts = list(width.cutoff=30)}
+glm2 <- glm(delivered ~ experience, family = poisson(link = "log"),data = wdf)
+glm2stat <- modelstat(glm2,wdf)
+instatdf <- data.frame(rbind(instatdf,glm2stat))
+rownames(instatdf)[2] <- 'Experience'
+modelsumm(glm2,'tab:tab5',"Model summary with Backlog feature")
+```
+
+```{r figure6, echo=FALSE, include=TRUE, message=FALSE, fig.cap="Regression plots using backlog feature.", fig.pos="H", fig.align='center', out.width="0.6\\linewidth"}
+modelplot(glm2)
+```
+
+Below Table \ref{tab:tab6} shows the consolidated statistics for above univariate analysis. We can determine that the metrics Deviance, AIC and BIC are very high suggesting the both the models failed at explaining the variance in the response variable. R-squared values are too low suggesting that individual features do not explain the pattern in the response variable. 
+
+```{r tab6,  echo=FALSE, results="asis", message=FALSE,  tidy.opts = list(width.cutoff=30)}
+xtable(instatdf,label = 'tab:tab6', caption = 'Statistics for univariate Analysis')
+```
+
+\subsubsection{Poisson Regression Models:}
+
+\textbf{Base Model:} Figure \ref{fig:figure7} and Table \ref{tab:tab7} shows the summary of the base model. In this model we used all the features without transformation. We fabricated a multiplicative feature from (backlog * experience). We can observe that residuals has constant variance and regression line hovers around its mean suggesting a good fit. We can see less P-values from the summary. We can also observe some outliers from Influence plot.
+
+```{r tab7,  echo=FALSE, results="asis", message=FALSE,  tidy.opts = list(width.cutoff=30)}
+rmv <- c("id","delivered","teamnum")
+cn <- names(wd)
+cn <- setdiff(cn,rmv)
+cn <- c(cn,"backlog:experience")
+fm <- as.formula(paste("delivered", paste(cn, collapse = "+"), sep = "~"))
+glm3 <- glm(fm,family = poisson(link = "log"), data = wd)
+glm3stat <- modelstat(glm3,wdf)
+statdf <- data.frame(rbind(glm3stat))
+rownames(statdf)[1] <- 'Base Poisson'
+names(statdf) <- c('Deviance','Dof','Chisq','R2','AIC','BIC','Gof-Dev','Gof-Pearson')
+modelsumm(glm3,'tab:tab7',"Model summary for base model")
+```
+
+```{r figure7, echo=FALSE, include=TRUE, message=FALSE, fig.cap="Regression plots for base model.", fig.pos="H", fig.align='center', out.width="0.8\\linewidth"}
+modelplot(glm3)
+```
+
+\textbf{Model with Encoded features:} Figure \ref{fig:figure8}, Table \ref{tab:tab8} provided the summary for this model. We can observe a good regression line and higher P-values and standard errors compared to base model. We can also observe some outliers from Influence plot.
+
+```{r tab8,  echo=FALSE, results="asis", message=FALSE,  tidy.opts = list(width.cutoff=30)}
+rmv <- c("delivered","teamnum")
+cn <- names(wdf)
+cn <- setdiff(cn,rmv)
+cn <- c(cn,"backlog:experience")
+fm <- as.formula(paste("delivered", paste(cn, collapse = "+"), sep = "~"))
+glm4 <- glm(fm,family = poisson(link = "log"), data = wdf)
+glm4stat <- modelstat(glm4,wdf)
+statdf <- data.frame(rbind(statdf,glm4stat))
+rownames(statdf)[2] <- 'Encoded for Categorical'
+modelsumm(glm4,'tab:tab8',"Model summary with encoded features")
+```
+
+```{r figure8, echo=FALSE, include=TRUE, message=FALSE, fig.cap="Regression plots for model with encoded features.", fig.pos="H", fig.align='center', out.width="0.8\\linewidth"}
+modelplot(glm4)
+```
+
+\textbf{Without outliers:} Figure \ref{fig:figure9} and Table \ref{tab:tab9} provide the summary for this model. We built this model on the subset of the data formed by removing the outliers identified in earlier models. We can see the regression line fits better compared to above two models. We have P-values less than the previous models. We further analyze the statistical metrics for these models. 
+
+```{r tab9,  echo=FALSE, results="asis", message=FALSE,  tidy.opts = list(width.cutoff=30)}
+rmv <- c("delivered","teamnum")
+cn <- names(wdf)
+cn <- setdiff(cn,rmv)
+cn <- c(cn,"backlog:experience")
+fm <- as.formula(paste("delivered", paste(cn, collapse = "+"), sep = "~"))
+glm5 <- glm(fm,family = poisson(link = "log"), data = wdf[-c(21,33,61, 65,66),])
+glm5stat <- modelstat(glm5,wdf[-c(21,33,61, 65,66),])
+statdf <- data.frame(rbind(statdf,glm5stat))
+rownames(statdf)[3] <- 'Without Outliers'
+modelsumm(glm5,'tab:tab9',"Model summary without outliers")
+```
+
+```{r figure9, echo=FALSE, include=TRUE, message=FALSE, fig.cap="Regression plots for model without outliers", fig.pos="H", fig.align='center', out.width="0.8\\linewidth"}
+modelplot(glm5)
+```
+
+\textbf{Quasi-Poisson:} In our EDA, we established that our response variable has overdispersion. Figure \ref{fig:figure10} and Table \ref{tab:tab10} provided the summary of this model. We can see P-values similar to the model without outliers and a simiar fit for regression line in residual plots.
+
+```{r tab10,  echo=FALSE, results="asis", message=FALSE,  tidy.opts = list(width.cutoff=30)}
+rmv <- c("delivered","teamnum")
+cn <- names(wdf)
+cn <- setdiff(cn,rmv)
+cn <- c(cn,"backlog:experience")
+fm <- as.formula(paste("delivered", paste(cn, collapse = "+"), sep = "~"))
+glm6 <- glm(fm,family = quasipoisson(link = "log"), data = wdf[-c(21,33,61, 65,66),])
+glm6stat <- modelstat(glm6,wdf[-c(21,33,61, 65,66),])
+statdf <- data.frame(rbind(statdf,glm6stat))
+rownames(statdf)[4] <- 'Quasi-poisson'
+modelsumm(glm6,'tab:tab10',"Summary for Quasi-Poisson Model")
+```
+
+```{r figure10, echo=FALSE, include=TRUE, message=FALSE, fig.cap="Regression plots for Quasi-Poisson Model", fig.pos="H", fig.align='center', out.width="0.8\\linewidth"}
+modelplot(glm6)
+```
+
+\textbf{Negative Binomial:} This model is also used to deal with overdispersion in the response variable. Figure \ref{fig:figure11} and Table \ref{tab:tab11} provided the summary for this model. We can see better P-values compared to previous models and a better fitted regression line against its residuals. We further analyze the metrics for this model to evaluate.
+
+```{r tab11,  echo=FALSE, results="asis", message=FALSE,  tidy.opts = list(width.cutoff=30)}
+rmv <- c("delivered","teamnum")
+cn <- names(wdf)
+cn <- setdiff(cn,rmv)
+cn <- c(cn,"backlog:experience")
+fm <- as.formula(paste("delivered", paste(cn, collapse = "+"), sep = "~"))
+glm7 <- glm.nb(fm, data = wdf[-c(21,33,61, 65,66),])
+glm7stat <- modelstat(glm7,wdf[-c(21,33,61, 65,66),])
+statdf <- data.frame(rbind(statdf,glm7stat))
+rownames(statdf)[5] <- 'Negative Binomial'
+modelsumm(glm7,'tab:tab11',"Summary for Negative-Binomial Model")
+```
+
+```{r figure11, echo=FALSE, include=TRUE, message=FALSE, fig.cap="Regression plots for Negative Binomial Model", fig.pos="H", fig.align='center', out.width="0.8\\linewidth"}
+modelplot(glm7)
+```
+
+\subsubsection{Secondary Objective Analysis}
+
+We attempted multiple models to determine that Negative-Binomial model performed better compared to other Models. This is because of the presence of overdispersion in response variable. We further apply step function to this Model to determine the best set of features that has greatest impact on it. 
+
+```{r  echo=FALSE, results="asis", message=FALSE,  tidy.opts = list(width.cutoff=30)}
+step(glm7)
+```
+
+\section{Results}
+
+We have performed multiple models as part of primary analysis and computed aforementioned Goodness of fit metrics to evaluate the best model. Table \ref{tab:tab12} is the result of that analysis. We can see that Negative Binomial model has lowest Deviance, AIC, BIC and Pearson Goodness of fit metrics. This suggests that Negative binomial model is suited well for this dataset explaining the variance of the response variable better than other models. 
+
+```{r tab12,  echo=FALSE, results="asis", message=FALSE,  tidy.opts = list(width.cutoff=30)}
+xtable(statdf,label = 'tab:tab12', caption = 'Goodness of Fit Metrics')
+```
+
+We used Step method to deduce the set of features that has greatest impact on the model. Below Table \ref{tab:tab13} is the result of the secondary analysis that gives below equation for prediction. 
+
+$log(Delivered) = 2.49 + 0.03*backlog -0.02*experience - 1.09*year01 - 1.01*quarter1 + 0.29*quarter3$
+
+```{r tab13,  echo=FALSE, results="asis", message=FALSE,  tidy.opts = list(width.cutoff=30)}
+xtable(data.frame(Features = c('backlog','experience','year_01','quarter_1','quarter_3'),Coefficients = c('0.03','-0.02','-1.09','-1.01','0.29')),label = 'tab:tab13',caption = "Important Features" )
+```
+
+All of the statistical analyses in this document will be performed using `r R.version.string` [R](https://www.r-project.org/) \citep{r2018}.
+R packages used will be maintained using the [packrat](http://rstudio.github.io/packrat/) dependency management system. 
+
+\section{Discussion and Conclusion}
+
+Features that were gathered by the process of counting the occurances of an event exhibit Poisson distribution. Our response variable is the count of websites delivered. To find the pattern and predict a count variable, poisson regression and its variants are used. 
+However, a poisson model assume that the average expected value of the variable is equal to its Variance. In our case Variance is higher which is called as overdispersion. We have computed multiple models to determine that Negative binomial works better for overdispersion. Our goodness of fit metrics were not ideal due to the fact that the dataset do not possess sufficient pattern to be modeled. We further used step method to determine the best set of features that had greatest impact on the model.
+
+\newpage
+
+\section{Appendix: R-code}
+
+This area is where you can include the code that was used to do the analysis.
+
+\begin{lstlisting}
+rm(list = ls(all=TRUE))
+# load packages
+library(knitr)
+library(formatR)
+library(stargazer)
+library(xtable)
+library(graphics)
+library(ggplot2)
+library(MASS)
+library(Hmisc)
+library(epiDisplay)
+library(vcd)
+library(mnormt)
+library(MASS)
+library(car)
+library(ggpubr)
+library(PairedData)
+library(lmtest)
+library(faraway)
+library(leaps)
+library(psych)
+library(Matrix)
+library(dobson)
+library(jtools)
+library(Rcpp)
+library(pscl)
+library(effects)
+
+v1 <- c('idnum: Identification number','delivered: Websites delivered','backlog: Backlog of orders','teamnum: Team number','experience: Team experience','change: Process change','year: Year','quarter: Quarter')
+v2 <- c('Cardinal','Discrete (Response Variable)','Continous','Cardinal','Continous','Categorical','Categorical-nominal','Categorical-nominal')
+td <- data.frame(cbind(v1,v2))
+names(td) <- c('Variable Name','Type')
+row.names(td) <- NULL
+xtable(td,label = 'tab:tab1',caption = 'Dataset Features and Types')
+
+wd <- read.csv("Data\\website.csv")
+
+par(mfrow = c(1, 3))
+plot(wd$backlog,ylab='Backlog')
+plot(wd$experience,ylab='Experience')
+plot(wd$backlog~wd$experience,xlab='Experience',ylab='Backlog')
+
+par(mfrow = c(1, 4))
+barplot(table(wd$change),xlab='Change')
+barplot(table(wd$year),xlab='Year')
+barplot(table(wd$quarter),xlab='Quarter')
+counts <- table(wd$year,wd$change)
+barplot(counts,col=c('gray48','gray100'),legend = rownames(counts),xlab='Change',ylab='Year')
+
+par(mfrow = c(1, 2))
+plot(wd$delivered, xlab='Index', ylab='Websites Delivered',main='Scatter plot')
+abline(h=c(sqrt(mean(wd$delivered)),sd(wd$delivered)),col=c('blue','red'))
+text(69,9.0,'Std Dev',cex=0.6,col='red')
+text(66,4.0,'Sqrt(mean)',cex=0.6,col='blue')
+barplot(table(wd$delivered), xlab='Websites Delivered', ylab='Frequency',main='Counts plot')
+
+par(mfrow = c(1, 4))
+counts <- table(wd$change,wd$delivered)
+barplot(counts,col=c('gray48','gray100'),legend = rownames(counts),xlab='delivered',ylab='change')
+
+counts <- table(wd$year,wd$delivered)
+barplot(counts,col=c('gray48','gray100'),legend = rownames(counts),xlab='delivered',ylab='year')
+
+wd2001 <- wd[wd$year == '2001',]
+counts <- table(wd2001$quarter,wd2001$delivered)
+barplot(counts,col=c('gray8','gray30','gray66','gray100'),legend = rownames(counts),xlab='delivered',ylab='quaerter-2001')
+
+wd2002 <- wd[wd$year == '2002',]
+counts <- table(wd2002$quarter,wd2002$delivered)
+barplot(counts,col=c('gray8','gray30','gray66','gray100'),legend = rownames(counts),xlab='delivered',ylab='quaerter-2002')
+
+wdfm <- as.data.frame(sapply(wd,function(x) cbind(summary(x))))
+row.names(wdfm) <- c('Min','1st Qu','Median','Mean','3rd Qu','Max')
+xtable(wdfm,label = 'tab:tab2',caption = 'Dataset summary')
+
+# Data transformation
+names(wd)[1] = "id"
+
+wdf <- data.frame(
+  delivered = as.numeric(wd$delivered),
+  backlog = as.numeric(wd$backlog),
+  teamnum = as.numeric(wd$teamnum),
+  experience = as.numeric(wd$experience),
+  change_0 = as.numeric(wd$change),
+  change_1 = as.numeric(wd$change),
+  year_01 = as.numeric(wd$year),
+  year_02 = as.numeric(wd$year),
+  quarter_1 = as.numeric(wd$quarter),
+  quarter_2 = as.numeric(wd$quarter),
+  quarter_3 = as.numeric(wd$quarter),
+  quarter_4 = as.numeric(wd$quarter)
+)
+
+wdf$change_0[wdf$change_0 == 0] <- 1
+wdf$change_0[wdf$change_0 == 1] <- 0
+wdf$change_1[wdf$change_1 == 0] <- 0
+wdf$change_1[wdf$change_1 == 1] <- 1
+
+wdf$year_01[wdf$year_01 == 2001] <- 1
+wdf$year_01[wdf$year_01 == 2002] <- 0
+wdf$year_02[wdf$year_02 == 2001] <- 0
+wdf$year_02[wdf$year_02 == 2002] <- 1
+ 
+wdf$quarter_1[wdf$quarter_1 != 1] <- 0
+wdf$quarter_1[wdf$quarter_1 == 1] <- 1
+wdf$quarter_2[wdf$quarter_2 != 2] <- 0
+wdf$quarter_2[wdf$quarter_2 == 2] <- 1
+wdf$quarter_3[wdf$quarter_3 != 3] <- 0
+wdf$quarter_3[wdf$quarter_3 == 3] <- 1
+wdf$quarter_4[wdf$quarter_4 != 4] <- 0
+wdf$quarter_4[wdf$quarter_4 == 4] <- 1
+
+newcol <- matrix(names(wdf), nrow = 3, byrow = TRUE)
+xtable(newcol,label = 'tab:tab3',caption = 'Features after transformation')
+
+modelstat <- function(mod,dtf){
+  # Summaries
+  mods1 <- summary(mod)
+  mods2 <- summ(mod, confint = TRUE, digits = 3, ci.width = 0.95)
+  
+  # Attributes
+  mods2atr <- attributes(mods2)
+  
+  # Goodness of fit
+  devresd <- round(residuals(mod, type = "deviance"), 3)
+  devgof <- sum(devresd^2)
+  
+  pearson.resid <- round(resid(mod, type = "pearson"), 3)
+  prsgof <- sum(pearson.resid^2)
+  
+  # Residual plots 
+  stddevres <- rstandard(mod)
+  stdpearsons <- rstandard(mod, type = "pearson")
+  
+  #poisson gof
+  chiq <- pchisq(deviance(mod), df.residual(mod), lower = F)
+  
+  c(mods1$deviance,mods1$df.residual,chiq,mods2atr$rsqmc,mods2atr$aic,mods2atr$bic,devgof,prsgof)
+}
+modelplot <- function(mod){
+  # plots
+  par(mfrow = c(1, 2))
+  plot(mod, which = c(1), main = "", caption = "")
+  ip <- influencePlot(mod)
+}
+modelsumm <- function(mod,lb,cp){
+  # stat
+  xtable(cbind( na.omit(summary(mod)$coef) ,RR= na.omit(coef(mod)), na.omit(confint(mod)) ),label = lb, caption = cp)
+}
+
+glm1 <- glm(delivered ~ backlog, family = poisson(link = "log"),data = wdf)
+glm1stat <- modelstat(glm1,wdf)
+instatdf <- data.frame(rbind(glm1stat))
+rownames(instatdf)[1] <- 'Backlog'
+names(instatdf) <- c('Deviance','Dof','Chisq','R2','AIC','BIC','Gof-Dev','Gof-Pearson')
+modelsumm(glm1,'tab:tab4',"Model summary with Backlog feature")
+
+modelplot(glm1)
+
+glm2 <- glm(delivered ~ experience, family = poisson(link = "log"),data = wdf)
+glm2stat <- modelstat(glm2,wdf)
+instatdf <- data.frame(rbind(instatdf,glm2stat))
+rownames(instatdf)[2] <- 'Experience'
+modelsumm(glm2,'tab:tab5',"Model summary with Backlog feature")
+
+modelplot(glm2)
+
+xtable(instatdf,label = 'tab:tab6', caption = 'Statistics for univariate Analysis')
+
+rmv <- c("id","delivered","teamnum")
+cn <- names(wd)
+cn <- setdiff(cn,rmv)
+cn <- c(cn,"backlog:experience")
+fm <- as.formula(paste("delivered", paste(cn, collapse = "+"), sep = "~"))
+glm3 <- glm(fm,family = poisson(link = "log"), data = wd)
+glm3stat <- modelstat(glm3,wdf)
+statdf <- data.frame(rbind(glm3stat))
+rownames(statdf)[1] <- 'Base Poisson'
+names(statdf) <- c('Deviance','Dof','Chisq','R2','AIC','BIC','Gof-Dev','Gof-Pearson')
+modelsumm(glm3,'tab:tab7',"Model summary for base model")
+
+modelplot(glm3)
+
+rmv <- c("delivered","teamnum")
+cn <- names(wdf)
+cn <- setdiff(cn,rmv)
+cn <- c(cn,"backlog:experience")
+fm <- as.formula(paste("delivered", paste(cn, collapse = "+"), sep = "~"))
+glm4 <- glm(fm,family = poisson(link = "log"), data = wdf)
+glm4stat <- modelstat(glm4,wdf)
+statdf <- data.frame(rbind(statdf,glm4stat))
+rownames(statdf)[2] <- 'Encoded for Categorical'
+modelsumm(glm4,'tab:tab8',"Model summary with encoded features")
+
+modelplot(glm4)
+
+rmv <- c("delivered","teamnum")
+cn <- names(wdf)
+cn <- setdiff(cn,rmv)
+cn <- c(cn,"backlog:experience")
+fm <- as.formula(paste("delivered", paste(cn, collapse = "+"), sep = "~"))
+glm5 <- glm(fm,family = poisson(link = "log"), data = wdf[-c(21,33,61, 65,66),])
+glm5stat <- modelstat(glm5,wdf[-c(21,33,61, 65,66),])
+statdf <- data.frame(rbind(statdf,glm5stat))
+rownames(statdf)[3] <- 'Without Outliers'
+modelsumm(glm5,'tab:tab9',"Model summary without outliers")
+
+modelplot(glm5)
+
+rmv <- c("delivered","teamnum")
+cn <- names(wdf)
+cn <- setdiff(cn,rmv)
+cn <- c(cn,"backlog:experience")
+fm <- as.formula(paste("delivered", paste(cn, collapse = "+"), sep = "~"))
+glm6 <- glm(fm,family = quasipoisson(link = "log"), data = wdf[-c(21,33,61, 65,66),])
+glm6stat <- modelstat(glm6,wdf[-c(21,33,61, 65,66),])
+statdf <- data.frame(rbind(statdf,glm6stat))
+rownames(statdf)[4] <- 'Quasi-poisson'
+modelsumm(glm6,'tab:tab10',"Summary for Quasi-Poisson Model")
+
+modelplot(glm6)
+
+rmv <- c("delivered","teamnum")
+cn <- names(wdf)
+cn <- setdiff(cn,rmv)
+cn <- c(cn,"backlog:experience")
+fm <- as.formula(paste("delivered", paste(cn, collapse = "+"), sep = "~"))
+glm7 <- glm.nb(fm, data = wdf[-c(21,33,61, 65,66),])
+glm7stat <- modelstat(glm7,wdf[-c(21,33,61, 65,66),])
+statdf <- data.frame(rbind(statdf,glm7stat))
+rownames(statdf)[5] <- 'Negative Binomial'
+modelsumm(glm7,'tab:tab11',"Summary for Negative-Binomial Model")
+
+modelplot(glm7)
+
+step(glm7)
+
+xtable(statdf,label = 'tab:tab12', caption = 'Goodness of Fit Metrics')
+xtable(data.frame(Features = c('backlog','experience','year_01','quarter_1','quarter_3'),Coefficients = c('0.03','-0.02','-1.09','-1.01','0.29')),label = 'tab:tab13',caption = "Important Features" )
+\end{lstlisting}
